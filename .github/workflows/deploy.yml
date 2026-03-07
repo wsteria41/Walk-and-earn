@@ -13,20 +13,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Build Docker image
-        run: docker build -t bolor4821/wearn-backend:latest -f backend/Dockerfile backend
-
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-      - name: Tag Docker image
-        run: docker tag wearn-backend ${{ secrets.DOCKER_USERNAME }}/wearn-backend:latest
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/wearn-backend:latest -f backend/Dockerfile backend
 
       - name: Push Docker image
         run: docker push ${{ secrets.DOCKER_USERNAME }}/wearn-backend:latest
 
       - name: Deploy on Droplet via SSH
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: root
@@ -38,6 +35,6 @@ jobs:
             docker run -d \
               --name wearn-backend \
               --restart unless-stopped \
-              -p 5000:5000 \
+              -p 127.0.0.1:5000:5000 \
               --env-file /root/.env \
               ${{ secrets.DOCKER_USERNAME }}/wearn-backend:latest
