@@ -19,6 +19,12 @@ app.use("/rewards", rewardRoutes);
 app.use("/users", userRoutes);
 app.use("/admin", adminRoutes);
 
+
+app.get("/health", (req, res) => {
+  console.log("Health endpoint called");
+  res.json({ status: "ok" });
+});
+
 app.get("/users", async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM users");

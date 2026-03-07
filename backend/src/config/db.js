@@ -13,7 +13,6 @@ const pool = mysql.createPool({
   ssl: {
     rejectUnauthorized: false
   }
-  
 });
 console.log("DB HOST:", process.env.DB_HOST);
 module.exports = pool;
