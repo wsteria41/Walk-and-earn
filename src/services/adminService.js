@@ -1,6 +1,6 @@
 const pool = require("../config/db");
 
-async function getAdminDashboard() {
+async function getAdminDashboard() {//admin dashboard data aggregation
   const [users] = await pool.query(`
     SELECT COUNT(*) AS total_users FROM users
   `);
