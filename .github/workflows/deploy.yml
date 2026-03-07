@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build Docker image
-        run: docker build -t wearn-backend ./backend
+        run: docker build -t bolor4821/wearn-backend:latest -f backend/Dockerfile backend
 
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
