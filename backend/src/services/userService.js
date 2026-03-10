@@ -124,7 +124,7 @@ async function getUserDashboard(userId) {
   /// USER PROFILE
   const [userRows] = await pool.query(
     `
-    SELECT id, email, total_points
+    SELECT id, name, email, total_points
     FROM users
     WHERE id = ?
     `,
@@ -159,7 +159,6 @@ async function getUserDashboard(userId) {
 
   const weeklySteps = Number(weeklyRows[0].weekly_steps);
 
-  /// TODAY POINTS
   const todayPoints = Math.floor(todaySteps / 1000);
 
   return {
