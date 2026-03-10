@@ -47,10 +47,25 @@ async function getDashboard(req, res) {
   }
 }
 
+async function updateGoal(req, res) {
+  try {
+    const userId = req.user.id;
+    const { goal } = req.body;
+
+    const result = await userService.updateGoal(userId, goal);
+
+    res.json(result);
+  } catch (err) {
+    console.error("GOAL UPDATE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
     getWeeklyLeaderboard,
     getMyWeeklyRank,
     getLeaderboard,
     getDailyStats,
-    getDashboard
+    getDashboard,
+    updateGoal
 };

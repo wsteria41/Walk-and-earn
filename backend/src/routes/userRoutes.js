@@ -19,5 +19,6 @@ router.get("/leaderboard/weekly/me", authMiddleware, userController.getMyWeeklyR
 router.get("/leaderboard", authMiddleware, userController.getLeaderboard);
 router.get("/stats/daily", authMiddleware, userController.getDailyStats);
 router.get("/dashboard", authMiddleware, userController.getDashboard);
+router.post("/goal", authMiddleware, userController.updateGoal);
 
 module.exports = router;
