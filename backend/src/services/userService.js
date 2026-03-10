@@ -118,9 +118,66 @@ async function getDailyStats(userId, days = 7) {//user iin suuliin N honogiin al
   return { dailyStats: result };
 }
 
+
+async function getUserDashboard(userId) {
+
+  /// USER PROFILE
+  const [userRows] = await pool.query(
+    `
+    SELECT id, email, total_points
+    FROM users
+    WHERE id = ?
+    `,
+    [userId]
+  );
+
+  const user = userRows[0];
+
+  /// TODAY STEPS
+  const [todayRows] = await pool.query(
+    `
+    SELECT IFNULL(SUM(delta_steps),0) AS today_steps
+    FROM step_records
+    WHERE user_id = ?
+    AND DATE(recorded_at) = CURDATE()
+    `,
+    [userId]
+  );
+
+  const todaySteps = Number(todayRows[0].today_steps);
+
+  /// WEEKLY STEPS
+  const [weeklyRows] = await pool.query(
+    `
+    SELECT IFNULL(SUM(delta_steps),0) AS weekly_steps
+    FROM step_records
+    WHERE user_id = ?
+    AND recorded_at >= CURDATE() - INTERVAL 7 DAY
+    `,
+    [userId]
+  );
+
+  const weeklySteps = Number(weeklyRows[0].weekly_steps);
+
+  /// TODAY POINTS
+  const todayPoints = Math.floor(todaySteps / 1000);
+
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      totalPoints: user.total_points
+    },
+    todaySteps,
+    weeklySteps,
+    todayPoints
+  };
+}
+
 module.exports = {
   getWeeklyLeaderboard,
   getMyWeeklyRank,
   getLeaderboard,
+  getUserDashboard,
   getDailyStats
 };

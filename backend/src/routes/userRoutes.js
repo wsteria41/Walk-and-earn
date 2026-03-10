@@ -18,5 +18,6 @@ router.get("/leaderboard/weekly", authMiddleware, userController.getWeeklyLeader
 router.get("/leaderboard/weekly/me", authMiddleware, userController.getMyWeeklyRank);
 router.get("/leaderboard", authMiddleware, userController.getLeaderboard);
 router.get("/stats/daily", authMiddleware, userController.getDailyStats);
+router.get("/dashboard", authMiddleware, userController.getDashboard);
 
 module.exports = router;

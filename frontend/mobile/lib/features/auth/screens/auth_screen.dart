@@ -1,6 +1,7 @@
 import '../services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -18,6 +19,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final name = TextEditingController();
   final email = TextEditingController();
   final password = TextEditingController();
+  final storage = const FlutterSecureStorage(); // secure storage holbogdoh object
 
   @override
   Widget build(BuildContext context) {
@@ -335,12 +337,13 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
+  //login function backend-ruu holbogdoh heseg
   Future<void> login() async {
-    // login function
-
     bool success = await authService.login(email.text, password.text);
 
     if (success) {
+      await storage.write(key: "token", value: "logged_in");// token save hiih heseg
+
       Navigator.pushReplacementNamed(context, "/dashboard");
     } else {
       ScaffoldMessenger.of(

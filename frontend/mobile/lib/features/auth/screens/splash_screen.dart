@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -9,14 +10,30 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+
+  final storage = const FlutterSecureStorage();
+
   @override
   void initState() {
     super.initState();
+    checkLogin();
+  }
 
-    /// 3 секундийн дараа auth screen рүү шилжинэ
-    Timer(const Duration(seconds: 3), () {
+  Future<void> checkLogin() async {
+
+    /// token авах
+    String? token = await storage.read(key: "token");
+
+    /// splash 3 секунд ажиллана
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (!mounted) return;
+
+    if (token != null) {
+      Navigator.pushReplacementNamed(context, "/dashboard");
+    } else {
       Navigator.pushReplacementNamed(context, "/auth");
-    });
+    }
   }
 
   Widget buildDot(int index) {
@@ -40,14 +57,13 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+
             ShaderMask(
               shaderCallback: (bounds) {
                 return const LinearGradient(
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
-
                   colors: [Colors.white, Color(0xFFD4B4FF), Color(0xFF7A1CBE)],
-
                   stops: [0.0, 0.90, 1.0],
                 ).createShader(bounds);
               },
@@ -68,7 +84,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
             const SizedBox(height: 24),
 
-            /// SUBTITLE
             const Text(
               "WALK. EARN. REPEAT.",
               style: TextStyle(
@@ -81,10 +96,13 @@ class _SplashScreenState extends State<SplashScreen> {
 
             const SizedBox(height: 50),
 
-            /// LOADING DOTS
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [buildDot(0), buildDot(1), buildDot(2)],
+              children: [
+                buildDot(0),
+                buildDot(1),
+                buildDot(2),
+              ],
             ),
           ],
         ),

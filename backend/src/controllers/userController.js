@@ -32,9 +32,25 @@ async function getDailyStats(req, res) {//authMiddleware-аас userId-ийг а
   }
 }
 
+async function getDashboard(req, res) {
+  try {
+
+    const userId = req.user.id;
+
+    const data = await userService.getUserDashboard(userId);
+
+    res.json(data);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load dashboard" });
+  }
+}
+
 module.exports = {
     getWeeklyLeaderboard,
     getMyWeeklyRank,
     getLeaderboard,
-    getDailyStats
+    getDailyStats,
+    getDashboard
 };

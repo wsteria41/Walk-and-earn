@@ -1,7 +1,57 @@
 import 'package:flutter/material.dart';
+import '../../../core/api/api_service.dart';
+import '../services/step_counter.dart';
+import '../../../components/stat_card.dart';
+import '../../../components/bottom_item.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final ApiService apiService = ApiService();
+  final StepCounter stepCounter = StepCounter();
+
+  String name = "User";
+  int steps = 0;
+  int points = 0;
+
+  final int goal = 10000;
+
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+  }
+
+  Future<void> loadData() async {
+    try {
+      /// backend profile
+      var profile = await apiService.getProfile();
+
+      /// phone step counter
+      int deviceSteps = await stepCounter.getTodaySteps();
+
+      setState(() {
+        name = profile["name"] ?? "User";
+        points = profile["points"] ?? 0;
+        steps = deviceSteps;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  double get progress {
+    return (steps / goal).clamp(0, 1);
+  }
+
+  int get remaining {
+    return goal - steps;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,11 +61,11 @@ class DashboardScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-
             /// HEADER
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -27,25 +77,24 @@ class DashboardScreen extends StatelessWidget {
                   end: Alignment.bottomRight,
                 ),
               ),
+
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-
                   /// HI NAME
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Hi",
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 16,
-                        ),
+                    children: [
+                      const Text(
+                        "Hi ❤️",
+                        style: TextStyle(color: Colors.white70, fontSize: 16),
                       ),
-                      SizedBox(height: 4),
+
+                      const SizedBox(height: 4),
+
                       Text(
-                        "Name",
-                        style: TextStyle(
+                        name,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -56,24 +105,32 @@ class DashboardScreen extends StatelessWidget {
 
                   Row(
                     children: [
-
                       /// POINTS
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 6),
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: Colors.white24),
                         ),
+
                         child: Row(
-                          children: const [
-                            Icon(Icons.auto_awesome,
-                                color: Colors.white, size: 16),
-                            SizedBox(width: 6),
+                          children: [
+                            const Icon(
+                              Icons.auto_awesome,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+
+                            const SizedBox(width: 6),
+
                             Text(
-                              "125",
-                              style: TextStyle(color: Colors.white),
-                            )
+                              "$points",
+                              style: const TextStyle(color: Colors.white),
+                            ),
                           ],
                         ),
                       ),
@@ -84,13 +141,13 @@ class DashboardScreen extends StatelessWidget {
                       CircleAvatar(
                         radius: 16,
                         backgroundColor: Colors.purpleAccent,
-                        child: const Text(
-                          "B",
-                          style: TextStyle(color: Colors.white),
+                        child: Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : "?",
+                          style: const TextStyle(color: Colors.white),
                         ),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
@@ -101,58 +158,56 @@ class DashboardScreen extends StatelessWidget {
             Stack(
               alignment: Alignment.center,
               children: [
-
                 SizedBox(
                   width: 220,
                   height: 220,
+
                   child: CircularProgressIndicator(
-                    value: 0.75,
+                    value: progress,
                     strokeWidth: 14,
                     backgroundColor: Colors.white10,
-                    valueColor: const AlwaysStoppedAnimation(
-                      Color(0xFF9B4DFF),
-                    ),
+
+                    valueColor: const AlwaysStoppedAnimation(Color(0xFF9B4DFF)),
                   ),
                 ),
 
                 Column(
-                  children: const [
-
+                  children: [
                     Text(
-                      "7,500",
-                      style: TextStyle(
+                      steps.toString(),
+                      style: const TextStyle(
                         fontSize: 42,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
 
-                    Text(
+                    const Text(
                       "steps",
                       style: TextStyle(color: Colors.white54),
                     ),
 
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
                     Text(
-                      "75% of goal",
-                      style: TextStyle(
+                      "${(progress * 100).toInt()}% of goal",
+                      style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
                       ),
                     ),
 
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
 
                     Text(
-                      "Goal: 10,000",
-                      style: TextStyle(
+                      "Goal: $goal",
+                      style: const TextStyle(
                         color: Colors.white38,
                         fontSize: 11,
                       ),
                     ),
                   ],
-                )
+                ),
               ],
             ),
 
@@ -161,23 +216,25 @@ class DashboardScreen extends StatelessWidget {
             /// STATS
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
+
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-
+                children: [
                   StatCard(
                     title: "Distance",
-                    value: "6.2 km",
+                    value: "${(steps * 0.0008).toStringAsFixed(2)} km",
+                    icon: Icons.route,
                   ),
 
                   StatCard(
                     title: "Calories",
-                    value: "625 kcal",
+                    value: "${(steps * 0.04).toInt()} kcal",
+                    icon: Icons.local_fire_department,
                   ),
-
                   StatCard(
                     title: "Time",
-                    value: "1.5 hrs",
+                    value: "${(steps / 1000).toStringAsFixed(1)} hrs",
+                    icon: Icons.timer,
                   ),
                 ],
               ),
@@ -188,31 +245,33 @@ class DashboardScreen extends StatelessWidget {
             /// MOTIVATION CARD
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
+
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
+
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
+
                   gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF7A1CBE),
-                      Color(0xFFB044FF),
-                    ],
+                    colors: [Color(0xFF7A1CBE), Color(0xFFB044FF)],
                   ),
                 ),
+
                 child: Row(
-                  children: const [
+                  children: [
+                    const Icon(
+                      Icons.auto_awesome,
+                      color: Colors.white,
+                      size: 28,
+                    ),
 
-                    Icon(Icons.auto_awesome,
-                        color: Colors.white, size: 28),
-
-                    SizedBox(width: 14),
+                    const SizedBox(width: 14),
 
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-
-                        Text(
+                        const Text(
                           "Keep Walking!",
                           style: TextStyle(
                             color: Colors.white,
@@ -221,17 +280,17 @@ class DashboardScreen extends StatelessWidget {
                           ),
                         ),
 
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
 
                         Text(
-                          "2500 more steps to reach your goal!",
-                          style: TextStyle(
+                          "$remaining more steps to reach your goal!",
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
                           ),
-                        )
+                        ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -242,97 +301,27 @@ class DashboardScreen extends StatelessWidget {
             /// BOTTOM NAV
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
+
               decoration: const BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: Colors.white10),
-                ),
+                border: Border(top: BorderSide(color: Colors.white10)),
               ),
+
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: const [
+                children: [
+                  BottomItem(icon: Icons.home, label: "Home", isActive: true),
 
-                  BottomItem(Icons.home, "Home", true),
-                  BottomItem(Icons.card_giftcard, "Rewards", false),
-                  BottomItem(Icons.history, "History", false),
-                  BottomItem(Icons.person_outline, "Profile", false),
+                  BottomItem(icon: Icons.card_giftcard, label: "Rewards"),
+
+                  BottomItem(icon: Icons.history, label: "History"),
+
+                  BottomItem(icon: Icons.person_outline, label: "Profile"),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-
-  const StatCard({super.key, required this.title, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 100,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C2430),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white54,
-              fontSize: 12,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          )
-        ],
-      ),
-    );
-  }
-}
-
-class BottomItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool active;
-
-  const BottomItem(this.icon, this.label, this.active, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-
-        Icon(
-          icon,
-          color: active ? Colors.purpleAccent : Colors.white54,
-        ),
-
-        const SizedBox(height: 4),
-
-        Text(
-          label,
-          style: TextStyle(
-            color: active ? Colors.purpleAccent : Colors.white54,
-            fontSize: 11,
-          ),
-        )
-      ],
     );
   }
 }
