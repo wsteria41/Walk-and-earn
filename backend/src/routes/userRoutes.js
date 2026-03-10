@@ -20,5 +20,8 @@ router.get("/leaderboard", authMiddleware, userController.getLeaderboard);
 router.get("/stats/daily", authMiddleware, userController.getDailyStats);
 router.get("/dashboard", authMiddleware, userController.getDashboard);
 router.post("/goal", authMiddleware, userController.updateGoal);
+router.get("/profile", authMiddleware, userController.getProfile);
+router.put("/profile", authMiddleware, userController.updateProfile);
+router.put("/health", authMiddleware, userController.updateHealth);
 
 module.exports = router;

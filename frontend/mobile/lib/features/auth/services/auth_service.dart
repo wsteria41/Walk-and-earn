@@ -4,10 +4,13 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/storage/secure_storage.dart';
 
 class AuthService {
+
   final SecureStorage storage = SecureStorage();
 
   Future<bool> login(String email, String password) async {
+
     try {
+
       final response = await http.post(
         Uri.parse(ApiConstants.baseUrl + ApiConstants.login),
         headers: {"Content-Type": "application/json"},
@@ -18,26 +21,37 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
+
         final data = jsonDecode(response.body);
 
         final token = data["token"];
 
         if (token != null) {
+
           await storage.saveToken(token);
+
+          print("TOKEN SAVED: $token");
+
+          return true;
         }
 
-        return true;
       }
 
       return false;
+
     } catch (e) {
+
       print("Login error: $e");
+
       return false;
+
     }
   }
 
   Future<bool> register(String name, String email, String password) async {
+
     try {
+
       final response = await http.post(
         Uri.parse(ApiConstants.baseUrl + ApiConstants.register),
         headers: {"Content-Type": "application/json"},
@@ -49,9 +63,13 @@ class AuthService {
       );
 
       return response.statusCode == 200 || response.statusCode == 201;
+
     } catch (e) {
+
       print("Register error: $e");
+
       return false;
+
     }
   }
 }

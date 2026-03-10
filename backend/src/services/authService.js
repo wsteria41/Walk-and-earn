@@ -4,6 +4,17 @@ const pool = require("../config/db");
 
 async function register(name, email, password) {
 
+  email = email.toLowerCase().trim();
+
+  if (!name || !email || !password) {
+    throw new Error("All fields are required");
+  }
+
+  if (password.length < 6) {
+    throw new Error("Password must be at least 6 characters");
+  }
+
+  // Email давхардал шалгах
   const [existing] = await pool.query(
     "SELECT id FROM users WHERE email = ?",
     [email]
@@ -13,17 +24,28 @@ async function register(name, email, password) {
     throw new Error("Email already registered");
   }
 
+  // Password hash
   const hashedPassword = await bcrypt.hash(password, 10);
 
   await pool.query(
-    "INSERT INTO users (name, email, password_hash, total_points, role) VALUES (?, ?, ?, 0, 'USER')",
+    `INSERT INTO users 
+      (name, email, password_hash, total_points, pending_steps, role)
+     VALUES (?, ?, ?, 0, 0, 'USER')`,
     [name, email, hashedPassword]
   );
 
-  return { message: "User registered" };
+  return {
+    message: "User registered successfully"
+  };
 }
 
 async function login(email, password) {
+
+  email = email.toLowerCase().trim();
+
+  if (!email || !password) {
+    throw new Error("Email and password required");
+  }
 
   const [rows] = await pool.query(
     "SELECT id, name, email, password_hash, role FROM users WHERE email = ?",
@@ -31,21 +53,28 @@ async function login(email, password) {
   );
 
   if (rows.length === 0) {
-    throw new Error("User not found");
+    throw new Error("Invalid email or password");
   }
 
   const user = rows[0];
 
-  const valid = await bcrypt.compare(password, user.password_hash);
+  const validPassword = await bcrypt.compare(password, user.password_hash);
 
-  if (!valid) {
-    throw new Error("Invalid password");
+  if (!validPassword) {
+    throw new Error("Invalid email or password");
   }
 
+  // JWT token үүсгэх
   const token = jwt.sign(
-    { id: user.id, role: user.role },
+    {
+      id: user.id,
+      role: user.role,
+      email: user.email
+    },
     process.env.JWT_SECRET,
-    { expiresIn: "7d" }
+    {
+      expiresIn: "7d"
+    }
   );
 
   return {
@@ -58,4 +87,7 @@ async function login(email, password) {
   };
 }
 
-module.exports = { register, login };
+module.exports = {
+  register,
+  login
+};

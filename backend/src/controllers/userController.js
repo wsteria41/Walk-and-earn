@@ -61,11 +61,82 @@ async function updateGoal(req, res) {
   }
 }
 
+async function getProfile(req, res) {
+
+  try {
+
+    const userId = req.user.id;
+
+    const user = await userService.getUserProfile(userId);
+
+    res.json(user);
+
+  } catch (error) {
+
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+
+  }
+
+}
+
+async function updateProfile(req, res) {
+
+  try {
+
+    const userId = req.user.id;
+
+    const { name, phone, location } = req.body;
+
+    await userService.updateProfile(userId, name, phone, location);
+
+    res.json({ message: "Profile updated" });
+
+  } catch (error) {
+
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+
+  }
+
+}
+
+async function updateHealth(req, res) {
+
+  try {
+
+    const userId = req.user.id;
+
+    const { age, height, weight, birth_year } = req.body;
+
+    await userService.updateHealth(
+      userId,
+      age,
+      height,
+      weight,
+      birth_year
+    );
+
+    res.json({ message: "Health updated" });
+
+  } catch (error) {
+
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+
+  }
+
+}
+
+
 module.exports = {
     getWeeklyLeaderboard,
     getMyWeeklyRank,
     getLeaderboard,
     getDailyStats,
     getDashboard,
-    updateGoal
+    updateGoal,
+    getProfile,
+    updateProfile,
+    updateHealth
 };

@@ -4,14 +4,17 @@ import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
 import '../storage/secure_storage.dart';
 
-class ApiService {//api service class backend server-ruu request hiih heseg
+class ApiService {
 
   final SecureStorage storage = SecureStorage();
 
-  //get request
+  //get req yavuulah
   Future<http.Response> get(String endpoint) async {
+
     final token = await storage.getToken();
 
+    print("TOKEN FROM STORAGE: $token");
+    print("REQUEST URL: ${ApiConstants.baseUrl + endpoint}");
     final headers = {
       "Content-Type": "application/json",
       if (token != null) "Authorization": "Bearer $token",
@@ -23,10 +26,15 @@ class ApiService {//api service class backend server-ruu request hiih heseg
     );
   }
 
-  //post request
+
+  //post req yavuulah
   Future<http.Response> post(
-      String endpoint, Map<String, dynamic> body) async {
+      String endpoint,
+      Map<String, dynamic> body
+      ) async {
+
     final token = await storage.getToken();
+    print("TOKEN: $token");
 
     final headers = {
       "Content-Type": "application/json",
@@ -40,27 +48,34 @@ class ApiService {//api service class backend server-ruu request hiih heseg
     );
   }
 
-  //dashboard data avah request
+  //dashboard data avah
   Future<Map<String, dynamic>> getDashboard() async {
-    final response = await get("/dashboard");
+
+    final response = await get(ApiConstants.dashboard);
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
-    } else {
-      throw Exception("Failed to load dashboard data: ${response.body}");
+    }
+
+    throw Exception("Failed to load dashboard: ${response.body}");
+  }
+
+  //update goal
+  Future<void> updateGoal(int newGoal) async {
+
+    final response = await post(
+       ApiConstants.updateGoal,
+      {
+        "goal": newGoal
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Goal update failed: ${response.body}");
     }
   }
 
-  //profile data avah request
-  Future<Map<String, dynamic>> getProfile() async {
-    final response = await get("/profile");
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception("Failed to load profile data: ${response.body}");
-    }
-  }
 
   
+
 }

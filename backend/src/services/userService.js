@@ -190,11 +190,50 @@ async function updateGoal(userId, goal) {//user iin daily goal-g shineer tohiruu
       return { message: "Goal updated" };
     }
 
+    async function getUserProfile(userId) {
+
+      const [rows] = await pool.query(
+        `SELECT id, name, email, phone, location, profile_photo,
+        age, height, weight, birth_year, bmi
+        FROM users WHERE id=?`,
+        [userId]
+      );
+
+      return rows[0];
+    }
+
+    async function updateProfile(userId, name, phone, location) {
+
+      await pool.query(
+        `UPDATE users 
+        SET name=?, phone=?, location=? 
+        WHERE id=?`,
+        [name, phone, location, userId]
+      );
+
+    }
+
+    async function updateHealth(userId, age, height, weight, birth_year) {
+
+      const bmi = weight / ((height / 100) * (height / 100));
+
+      await pool.query(
+        `UPDATE users 
+        SET age=?, height=?, weight=?, birth_year=?, bmi=? 
+        WHERE id=?`,
+        [age, height, weight, birth_year, bmi.toFixed(2), userId]
+      );
+
+    }
+
 module.exports = {
   getWeeklyLeaderboard,
   getMyWeeklyRank,
   getLeaderboard,
   getUserDashboard,
   getDailyStats,
-  updateGoal
+  updateGoal,
+  getUserProfile,
+  updateProfile,
+  updateHealth
 };

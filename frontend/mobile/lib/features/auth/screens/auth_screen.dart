@@ -339,18 +339,20 @@ class _AuthScreenState extends State<AuthScreen> {
 
   //login function backend-ruu holbogdoh heseg
   Future<void> login() async {
-    bool success = await authService.login(email.text, password.text);
 
-    if (success) {
-      await storage.write(key: "token", value: "logged_in");// token save hiih heseg
+  bool success = await authService.login(
+    email.text,
+    password.text,
+  );
 
-      Navigator.pushReplacementNamed(context, "/dashboard");
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Login failed")));
-    }
+  if (success) {
+    Navigator.pushReplacementNamed(context, "/dashboard");
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Login failed")),
+    );
   }
+}
 
   Future<void> register() async {
     // register function

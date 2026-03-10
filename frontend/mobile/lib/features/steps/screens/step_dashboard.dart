@@ -12,14 +12,15 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+
   final ApiService apiService = ApiService();
   final StepCounter stepCounter = StepCounter();
 
   String name = "User";
   int steps = 0;
   int points = 0;
-
-  final int goal = 10000;
+  int todayPoints = 0;
+  int goal = 10000;
 
   @override
   void initState() {
@@ -28,41 +29,121 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> loadData() async {
-    try {
-      /// backend profile
-      var profile = await apiService.getProfile();
 
-      /// phone step counter
+    try {
+
+      var dashboard = await apiService.getDashboard();
+
       int deviceSteps = await stepCounter.getTodaySteps();
 
       setState(() {
-        name = profile["name"] ?? "User";
-        points = profile["points"] ?? 0;
+
+        name = dashboard["user"]["name"] ?? "User";
+
+        points = dashboard["user"]["totalPoints"] ?? 0;
+
+        goal = dashboard["user"]["dailyGoal"] ?? 10000;
+
+        todayPoints = dashboard["todayPoints"] ?? 0;
+
         steps = deviceSteps;
+
       });
+
     } catch (e) {
       debugPrint(e.toString());
     }
   }
 
+  /// progress
   double get progress {
     return (steps / goal).clamp(0, 1);
   }
 
+  /// remaining steps
   int get remaining {
-    return goal - steps;
+    int r = goal - steps;
+    return r < 0 ? 0 : r;
+  }
+
+  /// distance
+  String get distance {
+    return (steps * 0.0008).toStringAsFixed(2);
+  }
+
+  /// calories
+  int get calories {
+    return (steps * 0.04).toInt();
+  }
+
+  /// time walked
+  String get timeWalked {
+    return (steps / 1000).toStringAsFixed(1);
+  }
+
+  /// goal change dialog
+  void changeGoal() {
+
+    final controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (_) {
+
+        return AlertDialog(
+
+          title: const Text("Set Daily Goal"),
+
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              hintText: "Enter steps (ex: 10000)"
+            ),
+          ),
+
+          actions: [
+
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+
+            ElevatedButton(
+              onPressed: () async {
+
+                int newGoal = int.tryParse(controller.text) ?? goal;
+
+                await apiService.updateGoal(newGoal);
+
+                setState(() {
+                  goal = newGoal;
+                });
+
+                Navigator.pop(context);
+              },
+              child: const Text("Save"),
+            )
+
+          ],
+        );
+      }
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
+
       backgroundColor: Colors.black,
 
       body: SafeArea(
+        child: SingleChildScrollView(
         child: Column(
           children: [
-            /// HEADER
             Container(
+              height: 200,
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
 
@@ -81,12 +162,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  /// HI NAME
+
+                  /// NAME
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+
                       const Text(
-                        "Hi ❤️",
+                        "Hi ",
                         style: TextStyle(color: Colors.white70, fontSize: 16),
                       ),
 
@@ -105,6 +188,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   Row(
                     children: [
+
                       /// POINTS
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -119,6 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                         child: Row(
                           children: [
+
                             const Icon(
                               Icons.auto_awesome,
                               color: Colors.white,
@@ -158,6 +243,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Stack(
               alignment: Alignment.center,
               children: [
+
                 SizedBox(
                   width: 220,
                   height: 220,
@@ -166,13 +252,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     value: progress,
                     strokeWidth: 14,
                     backgroundColor: Colors.white10,
-
                     valueColor: const AlwaysStoppedAnimation(Color(0xFF9B4DFF)),
                   ),
                 ),
 
                 Column(
                   children: [
+
                     Text(
                       steps.toString(),
                       style: const TextStyle(
@@ -199,11 +285,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     const SizedBox(height: 4),
 
-                    Text(
-                      "Goal: $goal",
-                      style: const TextStyle(
-                        color: Colors.white38,
-                        fontSize: 11,
+                    GestureDetector(
+
+                      onTap: changeGoal,
+
+                      child: Text(
+                        "Goal: $goal (tap to change)",
+                        style: const TextStyle(
+                          color: Colors.white38,
+                          fontSize: 11,
+                        ),
                       ),
                     ),
                   ],
@@ -211,36 +302,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
 
-            const SizedBox(height: 35),
+            const SizedBox(height: 30),
 
-            /// STATS
+            /// STATS GRID
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
 
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
+                childAspectRatio: 2.4,
+
                 children: [
+
                   StatCard(
                     title: "Distance",
-                    value: "${(steps * 0.0008).toStringAsFixed(2)} km",
+                    value: "$distance km",
                     icon: Icons.route,
                   ),
 
                   StatCard(
                     title: "Calories",
-                    value: "${(steps * 0.04).toInt()} kcal",
+                    value: "$calories kcal",
                     icon: Icons.local_fire_department,
                   ),
+
                   StatCard(
                     title: "Time",
-                    value: "${(steps / 1000).toStringAsFixed(1)} hrs",
+                    value: "$timeWalked hrs",
                     icon: Icons.timer,
+                  ),
+
+                  StatCard(
+                    title: "Points Today",
+                    value: "$todayPoints",
+                    icon: Icons.star,
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 25),
 
             /// MOTIVATION CARD
             Padding(
@@ -260,6 +364,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 child: Row(
                   children: [
+
                     const Icon(
                       Icons.auto_awesome,
                       color: Colors.white,
@@ -271,6 +376,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+
                         const Text(
                           "Keep Walking!",
                           style: TextStyle(
@@ -296,7 +402,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            const Spacer(),
+const SizedBox(height: 30),
 
             /// BOTTOM NAV
             Container(
@@ -308,19 +414,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
+                children: const [
+
                   BottomItem(icon: Icons.home, label: "Home", isActive: true),
-
                   BottomItem(icon: Icons.card_giftcard, label: "Rewards"),
-
                   BottomItem(icon: Icons.history, label: "History"),
-
                   BottomItem(icon: Icons.person_outline, label: "Profile"),
                 ],
               ),
             ),
           ],
         ),
+      ),
       ),
     );
   }

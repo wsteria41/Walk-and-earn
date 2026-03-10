@@ -1,12 +1,14 @@
 const pool = require("../config/db");
 
 async function redeemReward(userId, rewardId) {
+
   const connection = await pool.getConnection();
 
   try {
+
     await connection.beginTransaction();
 
-    const [rewardRows] = await connection.query(//reward id aar reward avaad, lock hiih
+    const [rewardRows] = await connection.query(
       `SELECT * FROM rewards 
        WHERE id = ? AND is_active = 1 
        FOR UPDATE`,
@@ -23,7 +25,7 @@ async function redeemReward(userId, rewardId) {
       throw new Error("Reward out of stock");
     }
 
-    const [userRows] = await connection.query(//useriin onoog shalgah, lock hiih
+    const [userRows] = await connection.query(
       `SELECT total_points 
        FROM users 
        WHERE id = ? 
@@ -31,27 +33,31 @@ async function redeemReward(userId, rewardId) {
       [userId]
     );
 
+    if (userRows.length === 0) {
+      throw new Error("User not found");
+    }
+
     const userPoints = userRows[0].total_points;
 
     if (userPoints < reward.required_points) {
       throw new Error("Not enough points");
     }
 
-    await connection.query( // onoo hasah(user point buuruulah)
+    await connection.query(
       `UPDATE users 
        SET total_points = total_points - ? 
        WHERE id = ?`,
       [reward.required_points, userId]
     );
 
-    await connection.query( //reward stock buuruulah
+    await connection.query(
       `UPDATE rewards 
        SET remaining_stock = remaining_stock - 1 
        WHERE id = ?`,
       [rewardId]
     );
 
-    await connection.query( //redeem transaction uusgeh
+    await connection.query(
       `INSERT INTO redeem_transactions
        (user_id, reward_id, points_used, status, redeemed_at)
        VALUES (?, ?, ?, 'PENDING', NOW())`,
@@ -67,14 +73,19 @@ async function redeemReward(userId, rewardId) {
     };
 
   } catch (err) {
+
     await connection.rollback();
     throw err;
+
   } finally {
+
     connection.release();
+
   }
 }
 
-async function getSuspiciousUsers() {//suspicious useriin medeelliig database aas avah
+async function getSuspiciousUsers() {
+
   const [rows] = await pool.query(
     `SELECT user_id, total_steps, delta_steps, suspicion_reason, recorded_at
      FROM step_records
@@ -86,11 +97,14 @@ async function getSuspiciousUsers() {//suspicious useriin medeelliig database aa
 }
 
 async function createReward(userId, name, description, requiredPoints, stockLimit) {
+
   const connection = await pool.getConnection();
+
   try {
+
     await connection.beginTransaction();
 
-    const [merchantRows] = await connection.query(//user id-aar merchant id avah
+    const [merchantRows] = await connection.query(
       `SELECT id FROM merchants WHERE user_id = ?`,
       [userId]
     );
@@ -101,8 +115,7 @@ async function createReward(userId, name, description, requiredPoints, stockLimi
 
     const merchantId = merchantRows[0].id;
 
-    
-    await connection.query( //Uramshuulal uusgeh
+    await connection.query(
       `INSERT INTO rewards
        (merchant_id, name, description, required_points, stock_limit, remaining_stock, is_active, created_at)
        VALUES (?, ?, ?, ?, ?, ?, 1, NOW())`,
@@ -123,13 +136,19 @@ async function createReward(userId, name, description, requiredPoints, stockLimi
     };
 
   } catch (err) {
+
     await connection.rollback();
     throw err;
+
   } finally {
+
     connection.release();
+
   }
 }
-async function getMyRedemptions(userId) {//useriin redemption transactioniig database aas avah
+
+async function getMyRedemptions(userId) {
+
   const [rows] = await pool.query(
     `SELECT r.name, t.points_used, t.status, t.redeemed_at
      FROM redeem_transactions t
@@ -142,67 +161,15 @@ async function getMyRedemptions(userId) {//useriin redemption transactioniig dat
   return { redemptions: rows };
 }
 
-async function approveRedemption(merchantUserId, transactionId){
-  const connection = await pool.getConnection();
-  try{
-    await connection.beginTransaction();
+async function approveRedemption(merchantUserId, transactionId) {
 
-    const [merchantRows] = await connection.query(//merchant user id aar merchant entity avah
-      `SELECT id FROM merchants WHERE user_id = ?`,
-      [merchantUserId]
-    );
-
-    if(merchantRows.lenght==0){
-      throw new Error("Merchnat not found");
-    }
-
-    const merchantId = merchantRows[0].id;
-
-  const [txRows] = await connection.query(//transaction shalgah, lock hiih
-        `SELECT t.*, r.merchant_id
-        FROM redeem_transactions t
-        JOIN rewards r ON t.reward_id = r.id
-        WHERE t.id = ? FOR UPDATE`,
-        [transactionId]
-      );
-
-      if(txRows.length === 0){
-        throw new Error("Transaction not found");
-      }
-
-      const tx = txRows[0];
-
-      if(tx.merchant_id !== merchantId){
-        throw new Error("Unauthorized action");
-      }
-
-      if(tx.status !== "PENDING"){
-        throw new Error("Transaction already processed");
-      }
-
-      await connection.query(//transaction statusiiig APPROVED bolgoh
-        `UPDATE redeem_transactions 
-         SET status = 'APPROVED' 
-         WHERE id = ?`,
-         [transactionId]
-      );
-      await connection.commit();
-      return {message: "Redemption approved"};
-    }catch(err){
-      await connection.rollback();
-      throw err;
-    }finally{
-      connection.release();
-    }
-}
-
-async function rejectRedemption(merchantUserId, transactionId) {//transactioniig reject hiih, pointsiig userd butsaah, reward stockiig nemeh
   const connection = await pool.getConnection();
 
   try {
+
     await connection.beginTransaction();
 
-    const [merchantRows] = await connection.query(//merchant user id aar merchant entity avah
+    const [merchantRows] = await connection.query(
       `SELECT id FROM merchants WHERE user_id = ?`,
       [merchantUserId]
     );
@@ -213,7 +180,71 @@ async function rejectRedemption(merchantUserId, transactionId) {//transactioniig
 
     const merchantId = merchantRows[0].id;
 
-    const [txRows] = await connection.query(//transaction shalgah, lock hiih
+    const [txRows] = await connection.query(
+      `SELECT t.*, r.merchant_id
+       FROM redeem_transactions t
+       JOIN rewards r ON t.reward_id = r.id
+       WHERE t.id = ? FOR UPDATE`,
+      [transactionId]
+    );
+
+    if (txRows.length === 0) {
+      throw new Error("Transaction not found");
+    }
+
+    const tx = txRows[0];
+
+    if (tx.merchant_id !== merchantId) {
+      throw new Error("Unauthorized action");
+    }
+
+    if (tx.status !== "PENDING") {
+      throw new Error("Transaction already processed");
+    }
+
+    await connection.query(
+      `UPDATE redeem_transactions 
+       SET status = 'APPROVED' 
+       WHERE id = ?`,
+      [transactionId]
+    );
+
+    await connection.commit();
+
+    return { message: "Redemption approved" };
+
+  } catch (err) {
+
+    await connection.rollback();
+    throw err;
+
+  } finally {
+
+    connection.release();
+
+  }
+}
+
+async function rejectRedemption(merchantUserId, transactionId) {
+
+  const connection = await pool.getConnection();
+
+  try {
+
+    await connection.beginTransaction();
+
+    const [merchantRows] = await connection.query(
+      `SELECT id FROM merchants WHERE user_id = ?`,
+      [merchantUserId]
+    );
+
+    if (merchantRows.length === 0) {
+      throw new Error("Merchant not found");
+    }
+
+    const merchantId = merchantRows[0].id;
+
+    const [txRows] = await connection.query(
       `SELECT t.*, r.merchant_id
        FROM redeem_transactions t
        JOIN rewards r ON t.reward_id = r.id
@@ -235,21 +266,21 @@ async function rejectRedemption(merchantUserId, transactionId) {//transactioniig
       throw new Error("Transaction already processed");
     }
 
-    await connection.query(//transaction statusiiig REJECTED bolgoh
+    await connection.query(
       `UPDATE redeem_transactions
        SET status = 'REJECTED'
        WHERE id = ?`,
       [transactionId]
     );
 
-    await connection.query(//useriin onoog nemeh
+    await connection.query(
       `UPDATE users
        SET total_points = total_points + ?
        WHERE id = ?`,
       [tx.points_used, tx.user_id]
     );
 
-    await connection.query(//reward stockiig nemeh
+    await connection.query(
       `UPDATE rewards
        SET remaining_stock = remaining_stock + 1
        WHERE id = ?`,
@@ -261,18 +292,22 @@ async function rejectRedemption(merchantUserId, transactionId) {//transactioniig
     return { message: "Redemption rejected & points refunded" };
 
   } catch (err) {
+
     await connection.rollback();
     throw err;
+
   } finally {
+
     connection.release();
+
   }
 }
-
-
 
 module.exports = {
   redeemReward,
   getSuspiciousUsers,
   getMyRedemptions,
   createReward,
+  approveRedemption,
+  rejectRedemption
 };
