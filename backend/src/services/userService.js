@@ -2,7 +2,7 @@ const pool = require("../config/db");
 
 async function getLeaderboard() {
   const [rows] = await pool.query(`
-    SELECT id, email, total_points
+    SELECT id, name, email, total_points
     FROM users
     WHERE role = 'USER'
     ORDER BY total_points DESC
@@ -16,6 +16,7 @@ async function getWeeklyLeaderboard() {
   const [rows] = await pool.query(`
     SELECT 
       ranked.id,
+      ranked.name,
       ranked.email,
       ranked.weekly_steps,
       ranked.weekly_points,
@@ -23,6 +24,7 @@ async function getWeeklyLeaderboard() {
     FROM (
       SELECT 
         u.id,
+        u.name,
         u.email,
         SUM(sr.delta_steps) AS weekly_steps,
         FLOOR(SUM(sr.delta_steps) / 1000) AS weekly_points,
@@ -124,7 +126,7 @@ async function getUserDashboard(userId) {
   /// USER PROFILE
   const [userRows] = await pool.query(
     `
-    SELECT id, name, email, total_points
+    SELECT id, name, email, total_points, daily_goal
     FROM users
     WHERE id = ?
     `,
@@ -164,8 +166,10 @@ async function getUserDashboard(userId) {
   return {
     user: {
       id: user.id,
+      name: user.name,
       email: user.email,
-      totalPoints: user.total_points
+      totalPoints: user.total_points,
+      dailyGoal: user.daily_goal
     },
     todaySteps,
     weeklySteps,
@@ -173,10 +177,24 @@ async function getUserDashboard(userId) {
   };
 }
 
+async function updateGoal(userId, goal) {//user iin daily goal-g shineer tohiruulah
+      await pool.query(
+        `
+        UPDATE users
+        SET daily_goal = ?
+        WHERE id = ?
+        `,
+        [goal, userId]
+      );
+
+      return { message: "Goal updated" };
+    }
+
 module.exports = {
   getWeeklyLeaderboard,
   getMyWeeklyRank,
   getLeaderboard,
   getUserDashboard,
-  getDailyStats
+  getDailyStats,
+  updateGoal
 };
