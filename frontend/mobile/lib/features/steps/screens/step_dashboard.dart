@@ -15,7 +15,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-
   final ApiService apiService = ApiService();
   final StepCounter stepCounter = StepCounter();
 
@@ -35,35 +34,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> loadData() async {
     try {
-      var dashboard = await apiService.getDashboard();
-
       int deviceSteps = await stepCounter.getTodaySteps();
 
+      await apiService.post("/walk/sync", {"totalSteps": deviceSteps});
+
+      var dashboard = await apiService.getDashboard();
+
       setState(() {
-        name = dashboard["user"]["name"] ?? "User";
-        points = dashboard["user"]["totalPoints"] ?? 0;
-        goal = dashboard["user"]["dailyGoal"] ?? 10000;
+        name = dashboard["user"]?["name"] ?? "User";
+        points = dashboard["user"]?["totalPoints"] ?? 0;
+        goal = dashboard["user"]?["dailyGoal"] ?? 10000;
         todayPoints = dashboard["todayPoints"] ?? 0;
         steps = deviceSteps;
       });
-
     } catch (e) {
       debugPrint(e.toString());
     }
   }
 
-  double get progress => (steps / goal).clamp(0, 1);
-
-  int get remaining {
-    int r = goal - steps;
-    return r < 0 ? 0 : r;
+  double get progress {
+    if (goal == 0) return 0;
+    return (steps / goal).clamp(0, 1);
   }
 
   String get distance => (steps * 0.0008).toStringAsFixed(2);
 
   int get calories => (steps * 0.04).toInt();
 
-  String get timeWalked => (steps / 1000).toStringAsFixed(1);
+  String get timeWalked => (steps * 0.01).toStringAsFixed(0);
 
   void changeGoal() {
     final controller = TextEditingController();
@@ -73,7 +71,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (_) {
         return AlertDialog(
           title: const Text("Set Daily Goal"),
-
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
@@ -81,9 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               hintText: "Enter steps (ex: 10000)",
             ),
           ),
-
           actions: [
-
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text("Cancel"),
@@ -91,7 +86,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             ElevatedButton(
               onPressed: () async {
-
                 int newGoal = int.tryParse(controller.text) ?? goal;
 
                 await apiService.updateGoal(newGoal);
@@ -101,7 +95,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 });
 
                 Navigator.pop(context);
-
               },
               child: const Text("Save"),
             ),
@@ -115,9 +108,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return SingleChildScrollView(
       child: Column(
         children: [
-
           Container(
-            height: 200,
+            height: 150,
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
 
@@ -136,15 +128,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
-                    const Text(
-                      "Hi",
-                      style: TextStyle(color: Colors.white70),
-                    ),
+                    const Text("Hi", style: TextStyle(color: Colors.white70)),
 
                     Text(
                       name,
@@ -159,9 +146,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 Row(
                   children: [
-
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.white24),
@@ -169,25 +158,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       child: Row(
                         children: [
-
-                          const Icon(Icons.auto_awesome,color: Colors.white,size: 16),
-
+                          const Icon(
+                            Icons.auto_awesome,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                           const SizedBox(width: 6),
 
-                          Text("$points",style: const TextStyle(color: Colors.white)),
-
+                          Text(
+                            "$points",
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ],
                       ),
                     ),
 
                     const SizedBox(width: 10),
 
-                    CircleAvatar(
-                      backgroundColor: Colors.purpleAccent,
-                      child: Text(name[0].toUpperCase()),
-                    )
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedIndex = 3;
+                        });
+                      },
+
+                      child: CircleAvatar(
+                        backgroundColor: Colors.purpleAccent,
+                        child: Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : "U",
+                        ),
+                      ),
+                    ),
                   ],
-                )
+                ),
               ],
             ),
           ),
@@ -197,7 +200,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Stack(
             alignment: Alignment.center,
             children: [
-
               SizedBox(
                 width: 220,
                 height: 220,
@@ -211,27 +213,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               Column(
                 children: [
-
                   Text(
                     steps.toString(),
                     style: const TextStyle(
-                        fontSize: 42,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                      fontSize: 42,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
 
-                  const Text("steps",style: TextStyle(color: Colors.white54)),
+                  const Text("steps", style: TextStyle(color: Colors.white54)),
 
-                  Text("${(progress * 100).toInt()}% of goal",
-                      style: const TextStyle(color: Colors.white70)),
+                  Text(
+                    "${(progress * 100).toInt()}% of goal",
+                    style: const TextStyle(color: Colors.white70),
+                  ),
 
                   GestureDetector(
                     onTap: changeGoal,
-                    child: Text("Goal: $goal",
-                        style: const TextStyle(color: Colors.white38)),
-                  )
+                    child: Text(
+                      "Goal: $goal",
+                      style: const TextStyle(color: Colors.white38),
+                    ),
+                  ),
                 ],
-              )
+              ),
             ],
           ),
 
@@ -245,18 +251,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
               shrinkWrap: true,
               crossAxisSpacing: 14,
               mainAxisSpacing: 14,
-              childAspectRatio: 2.4,
+              childAspectRatio: 1.6,
 
               children: [
+                StatCard(
+                  title: "Distance",
+                  value: "$distance km",
+                  icon: Icons.route,
+                ),
 
-                StatCard(title: "Distance",value: "$distance km",icon: Icons.route),
+                StatCard(
+                  title: "Calories",
+                  value: "$calories kcal",
+                  icon: Icons.local_fire_department,
+                ),
 
-                StatCard(title: "Calories",value: "$calories kcal",icon: Icons.local_fire_department),
+                StatCard(
+                  title: "Time",
+                  value: "$timeWalked min",
+                  icon: Icons.timer,
+                ),
 
-                StatCard(title: "Time",value: "$timeWalked hrs",icon: Icons.timer),
-
-                StatCard(title: "Points Today",value: "$todayPoints",icon: Icons.star),
-
+                StatCard(
+                  title: "Points Today",
+                  value: "$todayPoints",
+                  icon: Icons.star,
+                ),
               ],
             ),
           ),
@@ -269,7 +289,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     final screens = [
       buildHome(),
       const RewardsScreen(),
@@ -280,42 +299,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
 
-      body: SafeArea(
-        child: screens[selectedIndex],
-      ),
+      body: SafeArea(child: screens[selectedIndex]),
 
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
 
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Colors.white10)),
-        ),
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: Colors.white10)),
+          ),
 
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              GestureDetector(
+                onTap: () => setState(() => selectedIndex = 0),
+                child: BottomItem(
+                  icon: Icons.home,
+                  label: "Home",
+                  isActive: selectedIndex == 0,
+                ),
+              ),
 
-            GestureDetector(
-              onTap: () => setState(()=>selectedIndex=0),
-              child: BottomItem(icon: Icons.home,label: "Home",isActive: selectedIndex==0),
-            ),
+              GestureDetector(
+                onTap: () => setState(() => selectedIndex = 1),
+                child: BottomItem(
+                  icon: Icons.card_giftcard,
+                  label: "Rewards",
+                  isActive: selectedIndex == 1,
+                ),
+              ),
 
-            GestureDetector(
-              onTap: () => setState(()=>selectedIndex=1),
-              child: BottomItem(icon: Icons.card_giftcard,label: "Rewards",isActive: selectedIndex==1),
-            ),
+              GestureDetector(
+                onTap: () => setState(() => selectedIndex = 2),
+                child: BottomItem(
+                  icon: Icons.history,
+                  label: "History",
+                  isActive: selectedIndex == 2,
+                ),
+              ),
 
-            GestureDetector(
-              onTap: () => setState(()=>selectedIndex=2),
-              child: BottomItem(icon: Icons.history,label: "History",isActive: selectedIndex==2),
-            ),
-
-            GestureDetector(
-              onTap: () => setState(()=>selectedIndex=3),
-              child: BottomItem(icon: Icons.person_outline,label: "Profile",isActive: selectedIndex==3),
-            ),
-
-          ],
+              GestureDetector(
+                onTap: () => setState(() => selectedIndex = 3),
+                child: BottomItem(
+                  icon: Icons.person_outline,
+                  label: "Profile",
+                  isActive: selectedIndex == 3,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

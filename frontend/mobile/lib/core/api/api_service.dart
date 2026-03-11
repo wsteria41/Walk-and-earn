@@ -74,7 +74,18 @@ class ApiService {
       return [];
     }
 
-    print("API ERROR: ${response.body}");
+   print("API ERROR: ${response.body}");
     return [];
   }
+
+  Future<Map<String, dynamic>> getProfile() async {
+
+  final response = await get("/users/dashboard");
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  }
+
+  throw Exception("Failed to load profile");
+}
 }

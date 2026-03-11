@@ -126,6 +126,20 @@ async function updateHealth(req, res) {
 
   }
 
+  async function getTotalStats(req, res) {
+  try {
+
+    const userId = req.user.id;
+
+    const result = await userService.getTotalStats(userId);
+
+    res.json(result);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+}
 }
 
 
@@ -138,5 +152,6 @@ module.exports = {
     updateGoal,
     getProfile,
     updateProfile,
-    updateHealth
+    updateHealth,
+    getTotalStats
 };

@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { getTotalStats } = require("../controllers/userController");
 
 async function getLeaderboard() {
   const [rows] = await pool.query(`
@@ -224,6 +225,21 @@ async function updateGoal(userId, goal) {//user iin daily goal-g shineer tohiruu
         [age, height, weight, birth_year, bmi.toFixed(2), userId]
       );
 
+
+   async function getTotalStats(req, res) {
+        try {
+
+    const userId = req.user.id;
+
+    const result = await userService.getTotalStats(userId);
+
+    res.json(result);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+}
     }
 
 module.exports = {
@@ -235,5 +251,6 @@ module.exports = {
   updateGoal,
   getUserProfile,
   updateProfile,
-  updateHealth
+  updateHealth,
+  getTotalStats
 };

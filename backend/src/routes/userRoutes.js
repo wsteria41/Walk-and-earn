@@ -19,6 +19,7 @@ router.get("/leaderboard/weekly/me", authMiddleware, userController.getMyWeeklyR
 router.get("/leaderboard", authMiddleware, userController.getLeaderboard);
 router.get("/stats/daily", authMiddleware, userController.getDailyStats);
 router.get("/dashboard", authMiddleware, userController.getDashboard);
+router.get("/stats/total", authMiddleware, getTotalStats);
 router.post("/goal", authMiddleware, userController.updateGoal);
 router.get("/profile", authMiddleware, userController.getProfile);
 router.put("/profile", authMiddleware, userController.updateProfile);
