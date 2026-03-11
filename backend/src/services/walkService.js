@@ -1,4 +1,6 @@
 const pool = require("../config/db");
+const db = require("../config/db");
+
 
 async function submitSteps(userId, totalSteps, timestamp = new Date()) {
   const connection = await pool.getConnection();
@@ -159,8 +161,24 @@ async function getDailySummary(userId) {
   };
 }
 
+async function syncSteps(userId, steps) {
+
+  const points = Math.floor(steps / 1000);
+
+  await db.query(
+    "UPDATE users SET todaySteps = ?, totalPoints = totalPoints + ? WHERE id = ?",
+    [steps, points, userId]
+  );
+
+  return {
+    steps,
+    points
+  };
+}
+
 module.exports = {
   submitSteps,
   getHistory,
-  getDailySummary
+  getDailySummary,
+  syncSteps
 };

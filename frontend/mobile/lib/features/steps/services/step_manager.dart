@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'package:pedometer/pedometer.dart';
 import 'step_service.dart';
+import 'step_permission.dart';
 
-class StepManager {//Buh alhaltiin logic
+class StepManager {
 
   final StepService stepService = StepService();
 
@@ -11,21 +12,36 @@ class StepManager {//Buh alhaltiin logic
   int _lastSyncedSteps = 0;
   int _currentSteps = 0;
 
-  void startTracking() {
+  // STEP TRACKING START
+  Future<void> startTracking() async {
 
-    _subscription = Pedometer.stepCountStream.listen((StepCount event) {
+    bool granted = await StepPermission.request();
 
-      _currentSteps = event.steps;
+    if (!granted) {
+      print("Activity recognition permission denied");
+      return;
+    }
 
-      print("Current Steps: $_currentSteps");
+    _subscription = Pedometer.stepCountStream.listen(
+      (StepCount event) {
 
-    });
+        _currentSteps = event.steps;
+
+        print("Current Steps: $_currentSteps");
+
+      },
+      onError: (error) {
+        print("Step sensor error: $error");
+      },
+    );
   }
 
+  // STOP TRACKING
   void stopTracking() {
     _subscription?.cancel();
   }
 
+  // SYNC STEPS TO SERVER
   Future<void> syncSteps() async {
 
     if (_currentSteps == 0) return;

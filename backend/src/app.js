@@ -20,6 +20,7 @@ app.use("/walk", walkRoutes);
 app.use("/rewards", rewardRoutes);
 app.use("/users", userRoutes);
 app.use("/admin", adminRoutes);
+app.use("/sync", walkRoutes);
 
 
 app.get("/health", (req, res) => {

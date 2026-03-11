@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'step_manager.dart';
 
-class StepSyncScheduler {//Auto sync timer
+class StepSyncScheduler {
 
   final StepManager manager;
 
@@ -10,6 +10,8 @@ class StepSyncScheduler {//Auto sync timer
   StepSyncScheduler(this.manager);
 
   void start() {
+
+    if (_timer != null) return;
 
     _timer = Timer.periodic(
       const Duration(seconds: 60),
@@ -23,7 +25,10 @@ class StepSyncScheduler {//Auto sync timer
   }
 
   void stop() {
+
     _timer?.cancel();
+    _timer = null;
+
   }
 
 }

@@ -1,16 +1,31 @@
 import 'package:pedometer/pedometer.dart';
+import 'step_permission.dart';
 
 class StepCounter {
 
   Future<int> getTodaySteps() async {
-    int steps = 0;
 
-    Stream<StepCount> stepStream = Pedometer.stepCountStream;
+    bool granted = await StepPermission.request();
 
-    await stepStream.first.then((event) {
-      steps = event.steps;
-    });
+    if (!granted) {
+      print("Permission denied");
+      return 0;
+    }
 
-    return steps;
+    try {
+
+      StepCount event = await Pedometer.stepCountStream.first;
+
+      return event.steps;
+
+    } catch (e) {
+
+      print("STEP ERROR: $e");
+
+      return 0;
+
+    }
+
   }
+
 }

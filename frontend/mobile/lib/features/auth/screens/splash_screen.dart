@@ -9,22 +9,27 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
 
   final storage = const FlutterSecureStorage();
+  late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
+
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 1))
+          ..repeat();
+
     checkLogin();
   }
 
   Future<void> checkLogin() async {
 
-    /// token авах
     String? token = await storage.read(key: "token");
 
-    /// splash 3 секунд ажиллана
     await Future.delayed(const Duration(seconds: 3));
 
     if (!mounted) return;
@@ -37,74 +42,97 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Widget buildDot(int index) {
-    return Container(
-      width: 8,
-      height: 8,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: const BoxDecoration(
-        color: Color(0xFF7A1CBE),
-        shape: BoxShape.circle,
-      ),
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+
+        double opacity = (_controller.value + index * 0.3) % 1;
+
+        return Opacity(
+          opacity: opacity,
+          child: Container(
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: const BoxDecoration(
+              color: Color(0xFF7A1CBE),
+              shape: BoxShape.circle,
+            ),
+          ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
+      body: Container(
 
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0F0F0F),
+              Color(0xFF1A1A1A),
+            ],
+          ),
+        ),
 
-            ShaderMask(
-              shaderCallback: (bounds) {
-                return const LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [Colors.white, Color(0xFFD4B4FF), Color(0xFF7A1CBE)],
-                  stops: [0.0, 0.90, 1.0],
-                ).createShader(bounds);
-              },
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
 
-              child: Text(
-                'WEARN',
-                style: TextStyle(
-                  fontSize: 78,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 5,
-                  foreground: Paint()
-                    ..style = PaintingStyle.stroke
-                    ..strokeWidth = 3
-                    ..color = Colors.white,
+              /// APP NAME
+              ShaderMask(
+                shaderCallback: (bounds) {
+                  return const LinearGradient(
+                    colors: [
+                      Colors.white,
+                      Color(0xFFD4B4FF),
+                      Color(0xFF7A1CBE),
+                    ],
+                  ).createShader(bounds);
+                },
+                child: const Text(
+                  "WEARN",
+                  style: TextStyle(
+                    fontSize: 64,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 6,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-            const Text(
-              "WALK. EARN. REPEAT.",
-              style: TextStyle(
-                color: Color(0xFF7A1CBE),
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2,
+              /// TAGLINE
+              const Text(
+                "WALK. EARN. REPEAT.",
+                style: TextStyle(
+                  color: Color(0xFFD4B4FF),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 2,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 50),
+              const SizedBox(height: 60),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                buildDot(0),
-                buildDot(1),
-                buildDot(2),
-              ],
-            ),
-          ],
+              /// LOADING DOTS
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  buildDot(0),
+                  buildDot(1),
+                  buildDot(2),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
