@@ -226,19 +226,20 @@ async function updateGoal(userId, goal) {//user iin daily goal-g shineer tohiruu
       );
 
 
-   async function getTotalStats(req, res) {
-        try {
+   async function getTotalStats(userId) {
 
-    const userId = req.user.id;
+  const [rows] = await pool.query(
+    `
+    SELECT 
+      COALESCE(SUM(steps),0) as totalSteps,
+      COUNT(DISTINCT DATE(created_at)) as activeDays
+    FROM steps
+    WHERE user_id = ?
+    `,
+    [userId]
+  );
 
-    const result = await userService.getTotalStats(userId);
-
-    res.json(result);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
+  return rows[0];
 }
     }
 
