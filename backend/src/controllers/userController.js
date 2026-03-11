@@ -32,7 +32,7 @@ async function getDailyStats(req, res) {//authMiddleware-аас userId-ийг а
   }
 }
 
-async function getDashboard(req, res) {
+async function getDashboard(req, res) {//useriin dashboard data
   try {
 
     const userId = req.user.id;
@@ -47,7 +47,7 @@ async function getDashboard(req, res) {
   }
 }
 
-async function updateGoal(req, res) {
+async function updateGoal(req, res) {//user goal update
   try {
     const userId = req.user.id;
     const { goal } = req.body;
@@ -61,7 +61,7 @@ async function updateGoal(req, res) {
   }
 }
 
-async function getProfile(req, res) {
+async function getProfile(req, res) {//profile data
 
   try {
 
@@ -139,8 +139,11 @@ async function updateHealth(req, res) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
+  }
 }
-}
+
+
+
 
 
 module.exports = {
