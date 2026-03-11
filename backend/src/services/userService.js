@@ -1,5 +1,4 @@
 const pool = require("../config/db");
-const { getTotalStats } = require("../controllers/userController");
 
 async function getLeaderboard() {
   const [rows] = await pool.query(`
@@ -224,23 +223,23 @@ async function updateGoal(userId, goal) {//user iin daily goal-g shineer tohiruu
         WHERE id=?`,
         [age, height, weight, birth_year, bmi.toFixed(2), userId]
       );
+    }
 
-
+    
    async function getTotalStats(userId) {
 
-  const [rows] = await pool.query(
-    `
-    SELECT 
-      COALESCE(SUM(steps),0) as totalSteps,
-      COUNT(DISTINCT DATE(created_at)) as activeDays
-    FROM steps
-    WHERE user_id = ?
-    `,
-    [userId]
-  );
+      const [rows] = await pool.query(
+        `
+        SELECT 
+          COALESCE(SUM(steps),0) as totalSteps,
+          COUNT(DISTINCT DATE(created_at)) as activeDays
+        FROM steps
+        WHERE user_id = ?
+        `,
+        [userId]
+      );
 
-  return rows[0];
-}
+      return rows[0];
     }
 
 module.exports = {
