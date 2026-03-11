@@ -1,14 +1,18 @@
 const pool = require("../config/db");
-const db = require("../config/db");
 
-
+/*
+ CORE LOGIC
+ Алхам submit хийх (anti-cheat + points + logging)
+*/
 async function submitSteps(userId, totalSteps, timestamp = new Date()) {
+
   const connection = await pool.getConnection();
 
   try {
+
     await connection.beginTransaction();
 
-    //suulchiin bichleg avah
+    // Сүүлчийн алхмын record авах
     const [lastRows] = await connection.query(
       `SELECT total_steps, recorded_at
        FROM step_records
@@ -31,14 +35,16 @@ async function submitSteps(userId, totalSteps, timestamp = new Date()) {
     let suspicious = 0;
     let reason = null;
 
+    // Counter reset detection
     if (delta < 0) {
       suspicious = 1;
       reason = "Step counter decreased (possible reset)";
-      delta = 0; 
+      delta = 0;
     }
 
-    //5 minut tutamd 1500-aas deesh spike baival suspecious gej temdegleh
+    // 5 минутанд 1500+ алхам spike
     if (previousTime) {
+
       const minutesDiff =
         (new Date(timestamp) - previousTime) / (1000 * 60);
 
@@ -49,7 +55,7 @@ async function submitSteps(userId, totalSteps, timestamp = new Date()) {
       }
     }
 
-    //Udriin niit alham 40000 aas ih bol suspecious gej temdegleh
+    // Өдрийн нийт алхам шалгах
     const [dailyRows] = await connection.query(
       `SELECT SUM(delta_steps) as daily_total
        FROM step_records
@@ -65,7 +71,7 @@ async function submitSteps(userId, totalSteps, timestamp = new Date()) {
       reason = "Daily step limit exceeded";
     }
 
-    // step_records table-d record hiih
+    // Step record хадгалах
     await connection.query(
       `INSERT INTO step_records
        (user_id, total_steps, delta_steps, suspicious_flag, suspicion_reason, recorded_at)
@@ -73,14 +79,13 @@ async function submitSteps(userId, totalSteps, timestamp = new Date()) {
       [userId, totalSteps, delta, suspicious, reason, timestamp]
     );
 
-    //onoo bodoh
+    // Points тооцоолох
     let pointsEarned = 0;
 
     if (!suspicious && delta > 0) {
 
-      //  users.pending_steps avah
       const [userRows] = await connection.query(
-        `SELECT pending_steps, total_points
+        `SELECT pending_steps
          FROM users
          WHERE id = ?`,
         [userId]
@@ -116,15 +121,41 @@ async function submitSteps(userId, totalSteps, timestamp = new Date()) {
     };
 
   } catch (err) {
+
     await connection.rollback();
     throw err;
+
   } finally {
+
     connection.release();
+
   }
 }
 
 
+/*
+ API-д ашиглах sync function
+*/
+async function syncSteps(userId, totalSteps) {
+
+  const result = await submitSteps(userId, totalSteps);
+
+  return {
+    previousSteps: result.previousTotal,
+    newSteps: result.newTotal,
+    deltaSteps: result.deltaSteps,
+    pointsEarned: result.pointsEarned,
+    suspicious: result.suspicious
+  };
+
+}
+
+
+/*
+ History авах
+*/
 async function getHistory(userId) {
+
   const [rows] = await pool.query(
     `SELECT total_steps, delta_steps, suspicious_flag, recorded_at
      FROM step_records
@@ -137,9 +168,15 @@ async function getHistory(userId) {
   return {
     history: rows
   };
+
 }
 
+
+/*
+ Өдрийн summary
+*/
 async function getDailySummary(userId) {
+
   const [rows] = await pool.query(
     `SELECT 
         SUM(delta_steps) as total_steps_today,
@@ -152,6 +189,7 @@ async function getDailySummary(userId) {
 
   const totalSteps = rows[0].total_steps_today || 0;
   const validSteps = rows[0].valid_steps_today || 0;
+
   const pointsToday = Math.floor(validSteps / 1000);
 
   return {
@@ -159,26 +197,13 @@ async function getDailySummary(userId) {
     validStepsToday: validSteps,
     pointsToday
   };
+
 }
 
-async function syncSteps(userId, steps) {
-
-  const points = Math.floor(steps / 1000);
-
-  await db.query(
-    "UPDATE users SET todaySteps = ?, totalPoints = totalPoints + ? WHERE id = ?",
-    [steps, points, userId]
-  );
-
-  return {
-    steps,
-    points
-  };
-}
 
 module.exports = {
+  syncSteps,
   submitSteps,
   getHistory,
-  getDailySummary,
-  syncSteps
+  getDailySummary
 };
