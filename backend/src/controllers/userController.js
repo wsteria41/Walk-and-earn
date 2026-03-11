@@ -1,4 +1,4 @@
-const { getLeaderboard } = require("../services/userService");
+
 const userService = require("../services/userService");
 
 async function getWeeklyLeaderboard(req, res) {
@@ -14,6 +14,14 @@ async function getMyWeeklyRank(req, res) {
   try {
     const userId = req.user.id;
     const result = await userService.getMyWeeklyRank(userId);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+async function getLeaderboard(req, res) {
+  try {
+    const result = await userService.getLeaderboard();
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -226,21 +226,21 @@ async function updateGoal(userId, goal) {//user iin daily goal-g shineer tohiruu
     }
 
     
-   async function getTotalStats(userId) {
+async function getTotalStats(userId) {
 
-      const [rows] = await pool.query(
-        `
-        SELECT 
-          COALESCE(SUM(steps),0) as totalSteps,
-          COUNT(DISTINCT DATE(created_at)) as activeDays
-        FROM steps
-        WHERE user_id = ?
-        `,
-        [userId]
-      );
+  const [rows] = await pool.query(
+    `
+    SELECT 
+      IFNULL(SUM(delta_steps),0) AS totalSteps,
+      COUNT(DISTINCT DATE(recorded_at)) AS activeDays
+    FROM step_records
+    WHERE user_id = ?
+    `,
+    [userId]
+  );
 
-      return rows[0];
-    }
+  return rows[0];
+}
 
 module.exports = {
   getWeeklyLeaderboard,
