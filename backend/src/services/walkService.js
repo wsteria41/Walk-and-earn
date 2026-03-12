@@ -125,7 +125,7 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
     }
 
     // GPS SPOOF DETECTION (big teleport)
-    if (previousLat && previousLon) {
+    if (previousLat != null && previousLon != null) {
 
       const distance = calculateDistance(
         previousLat,
@@ -253,15 +253,18 @@ async function syncSteps(userId, totalSteps, latitude, longitude) {
 
 }
 
-async function getHistory(userId) {
+async function getHistory(userId, days = 7) {
 
   const [rows] = await pool.query(
-    `SELECT total_steps, delta_steps, suspicious_flag, recorded_at
+    `SELECT 
+        DATE(recorded_at) AS date,
+        MAX(total_steps) AS steps
      FROM step_records
      WHERE user_id = ?
-     ORDER BY recorded_at DESC
-     LIMIT 50`,
-    [userId]
+     GROUP BY DATE(recorded_at)
+     ORDER BY date DESC
+     LIMIT ?`,
+    [userId, days]
   );
 
   return {

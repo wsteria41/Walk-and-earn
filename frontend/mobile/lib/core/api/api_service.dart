@@ -82,22 +82,21 @@ class ApiService {
   }
 
   //DAILY STATS
-  Future<List<dynamic>> getDailyStats() async {
-    final response = await get("/users/stats/daily?days=7");
+Future<List<Map<String, dynamic>>> getDailyStats() async {
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+  final response = await get("/users/stats/daily?days=7");
 
-      if (data is Map && data.containsKey("stats")) {
-        return List.from(data["stats"]);
-      }
+  if (response.statusCode == 200) {
 
-      return [];
-    }
+    final data = jsonDecode(response.body);
 
-    print("API ERROR: ${response.body}");
-    return [];
+    return List<Map<String, dynamic>>.from(data["dailyStats"]);
+
   }
+
+  throw Exception("Failed to load daily stats");
+
+}
 
   //PROFILE DATA
   Future<Map<String, dynamic>> getProfile() async {
@@ -209,6 +208,21 @@ Future<Map<String, dynamic>> syncSteps(
   }
 
   throw Exception("Step sync failed: ${response.body}");
-}
+ }
 
+
+Future<List<Map<String, dynamic>>> getHistory() async {
+
+  final response = await get("/walk/history?days=7");
+
+  if (response.statusCode == 200) {
+
+    final data = jsonDecode(response.body);
+
+    return List<Map<String, dynamic>>.from(data["history"] ?? []);
+
+  }
+
+  throw Exception("Failed to load history");
+}
 }

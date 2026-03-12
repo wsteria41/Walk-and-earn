@@ -23,7 +23,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   int get totalSteps {
     int sum = 0;
     for (var day in stats) {
-      sum += (day["steps"] ?? 0) as int;
+      int steps = int.tryParse(day["total_steps"].toString()) ?? 0;
+      sum += steps;
     }
     return sum;
   }
@@ -31,7 +32,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   int get totalPoints {
     int sum = 0;
     for (var day in stats) {
-      sum += (day["points"] ?? 0) as int;
+      int steps = int.tryParse(day["steps"].toString()) ?? 0;
+      sum += (steps / 100).floor();
     }
     return sum;
   }
@@ -39,19 +41,54 @@ class _HistoryScreenState extends State<HistoryScreen> {
   int get activeDays {
     int count = 0;
     for (var day in stats) {
-      if ((day["steps"] ?? 0) > 0) {
+      int steps = int.tryParse(day["total_steps"].toString()) ?? 0;
+      if (steps > 0) {
         count++;
       }
     }
     return count;
   }
 
+String formatDate(String? isoDate) {
+
+  if (isoDate == null || isoDate.isEmpty) {
+    return "Unknown";
+  }
+
+  DateTime? d = DateTime.tryParse(isoDate);
+
+  if (d == null) {
+    return "Unknown";
+  }
+
+  d = d.toLocal();
+
+  DateTime now = DateTime.now();
+
+  if (d.year == now.year && d.month == now.month && d.day == now.day) {
+    return "Today";
+  }
+
+  if (d.year == now.year &&
+      d.month == now.month &&
+      d.day == now.day - 1) {
+    return "Yesterday";
+  }
+
+  return "${d.month}/${d.day}";
+}
+
   Future<void> loadHistory() async {
     try {
-      var data = await api.getDailyStats();
+      final data = await api.getHistory();
+
+    print("HISTORY LENGTH: ${data.length}");
+    print("HISTORY DATA: $data");
+
+      if (!mounted) return;
 
       setState(() {
-        stats = data;
+        stats = data.take(7).toList();
         loading = false;
       });
     } catch (e) {
@@ -76,6 +113,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       backgroundColor: Colors.black,
       body: SafeArea(
         child: ListView(
+          physics: const BouncingScrollPhysics(),
           children: [
             const SizedBox(height: 20),
 
@@ -101,10 +139,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
             const SizedBox(height: 20),
 
             ...stats.map((day) {
-              int steps = day["steps"] ?? 0;
-              int points = day["points"] ?? 0;
+              int steps = int.tryParse(day["steps"].toString()) ?? 0;
+              int points = int.tryParse(day["points"].toString()) ?? 0;
 
-              return activityCard(day["date"], steps, points);
+              String date = formatDate(day["date"]);
+
+              return activityCard(date, steps, points);
             }).toList(),
           ],
         ),

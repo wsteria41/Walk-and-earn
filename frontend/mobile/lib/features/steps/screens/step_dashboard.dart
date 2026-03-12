@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/api/api_service.dart';
-import '../services/step_counter.dart';
+
 import '../../../components/stat_card.dart';
 import '../../../components/bottom_item.dart';
 import '../screens/history_screen.dart';
@@ -18,9 +18,8 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final ApiService apiService = ApiService();
-  final StepCounter stepCounter = StepCounter();
 
-  StreamSubscription<StepCount>? _stepSubscription;   
+  StreamSubscription<StepCount>? _stepSubscription;
 
   int selectedIndex = 0;
 
@@ -30,6 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int todayPoints = 0;
   int goal = 10000;
   int lastSyncedSteps = 0;
+  int baseSteps = 0;
 
   @override
   void initState() {
@@ -40,26 +40,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   @override
-void dispose() {
+  void dispose() {
+    _stepSubscription?.cancel();
 
-  _stepSubscription?.cancel();
+    super.dispose();
+  }
 
-  super.dispose();
-}
+  void startStepListener() {
 
-void startStepListener() {
-
-  _stepSubscription = Pedometer.stepCountStream.listen((StepCount event) async {
+  _stepSubscription =
+      Pedometer.stepCountStream.listen((StepCount event) async {
 
     int currentSteps = event.steps;
 
     print("LIVE STEPS: $currentSteps");
 
+    if (!mounted) return;
+
     setState(() {
       steps = currentSteps;
     });
 
-    // 200 алхам тутам backend sync
+    // 👇 эхний sync
+    if (lastSyncedSteps == 0) {
+
+      lastSyncedSteps = currentSteps;
+
+      await apiService.post("/walk/sync", {
+        "total_steps": currentSteps
+      });
+
+      print("INITIAL SYNC: $currentSteps");
+
+      return;
+    }
+
+    // 👇 200 алхам тутам sync
     if (currentSteps - lastSyncedSteps >= 200) {
 
       lastSyncedSteps = currentSteps;
@@ -67,7 +83,7 @@ void startStepListener() {
       try {
 
         await apiService.post("/walk/sync", {
-          "total_steps": currentSteps,
+          "total_steps": currentSteps
         });
 
         print("STEPS SYNCED: $currentSteps");
@@ -88,22 +104,38 @@ void startStepListener() {
 
 }
 
-  Future<void> loadData() async {
+Future<void> syncCurrentSteps() async {
   try {
 
-    var dashboard = await apiService.getDashboard();
+    if (steps == 0) return;
 
-    setState(() {
-      name = dashboard["user"]?["name"] ?? "User";
-      points = dashboard["user"]?["totalPoints"] ?? 0;
-      goal = dashboard["user"]?["dailyGoal"] ?? 10000;
-      todayPoints = dashboard["todayPoints"] ?? 0;
+    await apiService.post("/walk/sync", {
+      "total_steps": steps
     });
 
+    lastSyncedSteps = steps;
+
+    print("INITIAL SYNC: $steps");
+
   } catch (e) {
-    debugPrint(e.toString());
+    print("INITIAL SYNC ERROR: $e");
   }
 }
+
+  Future<void> loadData() async {
+    try {
+      var dashboard = await apiService.getDashboard();
+
+      setState(() {
+        name = dashboard["user"]?["name"] ?? "User";
+        points = dashboard["user"]?["totalPoints"] ?? 0;
+        goal = dashboard["user"]?["dailyGoal"] ?? 10000;
+        todayPoints = dashboard["todayPoints"] ?? 0;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
 
   double get progress {
     if (goal == 0) return 0;

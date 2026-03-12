@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../providers/theme_provider.dart';
+import '../../../providers/language_provider.dart';
 import '../../../providers/notification_provider.dart';
-
 import '../../../core/localization/language_controller.dart';
-import '../../../core/localization/app_text.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -14,14 +13,11 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
     final notificationProvider = Provider.of<NotificationProvider>(context);
-    final languageController = Provider.of<LanguageController>(context);
 
     return Scaffold(
-
-      appBar: AppBar(
-        title: Text(AppText.t("settings")),
-      ),
+      appBar: AppBar(title: const Text("Settings")),
 
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -29,7 +25,7 @@ class SettingsScreen extends StatelessWidget {
 
           /// DARK MODE
           SwitchListTile(
-            title: Text(AppText.t("darkMode")),
+            title: const Text("Dark Mode"),
             value: themeProvider.isDark,
             onChanged: (v){
               themeProvider.toggleTheme(v);
@@ -38,7 +34,7 @@ class SettingsScreen extends StatelessWidget {
 
           /// NOTIFICATIONS
           SwitchListTile(
-            title: Text(AppText.t("notifications")),
+            title: const Text("Notifications"),
             value: notificationProvider.enabled,
             onChanged: (v){
               notificationProvider.toggle(v);
@@ -47,46 +43,40 @@ class SettingsScreen extends StatelessWidget {
 
           /// LANGUAGE
           ListTile(
-            title: Text(AppText.t("language")),
+            title: const Text("Language"),
             subtitle: Text(
-              AppText.currentLang == "en"
+              languageProvider.locale.languageCode == "en"
                   ? "English"
                   : "Монгол"
             ),
 
             onTap: (){
 
-              showDialog(
+              showModalBottomSheet(
                 context: context,
-                builder: (context){
+                builder: (_) {
 
-                  return AlertDialog(
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
 
-                    title: Text(AppText.t("language")),
+                      ListTile(
+                        title: const Text("English"),
+                        onTap: (){
+                          languageProvider.setLanguage("en");
+                          Navigator.pop(context);
+                        },
+                      ),
 
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
+                      ListTile(
+                        title: const Text("Монгол"),
+                        onTap: (){
+                          languageProvider.setLanguage("mn");
+                          Navigator.pop(context);
+                        },
+                      ),
 
-                        ListTile(
-                          title: const Text("English"),
-                          onTap: (){
-                            languageController.setLanguage("en");
-                            Navigator.pop(context);
-                          },
-                        ),
-
-                        ListTile(
-                          title: const Text("Монгол"),
-                          onTap: (){
-                            languageController.setLanguage("mn");
-                            Navigator.pop(context);
-                          },
-                        ),
-
-                      ],
-                    ),
-
+                    ],
                   );
 
                 },
