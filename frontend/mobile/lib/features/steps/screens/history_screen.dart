@@ -23,7 +23,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   int get totalSteps {
     int sum = 0;
     for (var day in stats) {
-      int steps = int.tryParse(day["total_steps"].toString()) ?? 0;
+      int steps = int.tryParse(day["steps"].toString()) ?? 0;
       sum += steps;
     }
     return sum;
