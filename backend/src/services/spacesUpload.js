@@ -9,7 +9,8 @@ async function uploadFile(file, userId) {
       Bucket: "wearn-profile-images",
       Key: `profiles/${userId}/profile.png`,
       Body: file.buffer,
-      ACL: "public-read"
+      ACL: "public-read",
+      ContentType: file.mimetype
     }
   });
 
