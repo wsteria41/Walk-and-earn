@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/api/api_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -16,8 +18,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final locationController = TextEditingController();
 
   final api = ApiService();
+  final picker = ImagePicker();
 
   bool loading = true;
+
+  String? profilePhoto;
+  File? selectedImage;
 
   @override
   void initState() {
@@ -36,8 +42,38 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       phoneController.text = profile["phone"] ?? "";
       locationController.text = profile["location"] ?? "";
 
+      profilePhoto = profile["profile_photo"];
+
       loading = false;
     });
+  }
+
+  Future pickImage() async {
+
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+
+    if(picked == null) return;
+
+    setState(() {
+      selectedImage = File(picked.path);
+    });
+
+    await uploadPhoto();
+  }
+
+  Future uploadPhoto() async {
+
+    if(selectedImage == null) return;
+
+    final url = await api.uploadProfilePhoto(selectedImage!);
+
+    setState(() {
+      profilePhoto = url;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Photo updated"))
+    );
   }
 
   Future saveProfile() async {
@@ -92,9 +128,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: Column(
           children: [
 
-            const CircleAvatar(
-              radius: 45,
-              child: Text("B",style:TextStyle(fontSize:30)),
+            Stack(
+              children: [
+
+                CircleAvatar(
+                  radius: 45,
+                  backgroundImage: selectedImage != null
+                      ? FileImage(selectedImage!)
+                      : (profilePhoto != null
+                          ? NetworkImage(profilePhoto!) as ImageProvider
+                          : null),
+                  child: profilePhoto == null && selectedImage == null
+                      ? const Text("B", style: TextStyle(fontSize: 30))
+                      : null,
+                ),
+
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: pickImage,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.purple,
+                        shape: BoxShape.circle
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      child: const Icon(Icons.camera_alt, color: Colors.white)
+                    ),
+                  ),
+                )
+              ],
+            ),
+
+            const SizedBox(height:10),
+
+            TextButton(
+              onPressed: pickImage,
+              child: const Text(
+                "Change Photo",
+                style: TextStyle(color: Colors.purple),
+              )
             ),
 
             const SizedBox(height:30),

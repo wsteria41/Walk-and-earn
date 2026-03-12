@@ -123,7 +123,7 @@ async function uploadPhoto(req, res) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const photoUrl = await uploadFile(req.file);
+    const photoUrl = await uploadFile(req.file, req.user.id);
 
     console.log("UPLOADED URL:", photoUrl);
 

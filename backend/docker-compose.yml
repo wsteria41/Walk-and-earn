@@ -2,6 +2,7 @@ version: "3"
 
 services:
   backend:
+    container_name: wearn-backend
     image: bolor4821/wearn-backend:latest
     ports:
       - "5000:5000"

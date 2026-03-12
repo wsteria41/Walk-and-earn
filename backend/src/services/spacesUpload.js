@@ -1,13 +1,13 @@
 const { Upload } = require("@aws-sdk/lib-storage");
 const spacesClient = require("../config/spaces");
 
-async function uploadFile(file) {
+async function uploadFile(file, userId) {
 
   const upload = new Upload({
     client: spacesClient,
     params: {
       Bucket: "wearn-profile-images",
-      Key: `profiles/${Date.now()}-${file.originalname}`,
+      Key: `profiles/${userId}/profile.png`,
       Body: file.buffer,
       ACL: "public-read"
     }

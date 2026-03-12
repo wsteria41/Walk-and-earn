@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
 import '../storage/secure_storage.dart';
+import 'dart:io';
 
 class ApiService {
   final SecureStorage storage = SecureStorage();
@@ -131,5 +132,37 @@ Future<void> updateHealth(Map<String, dynamic> data) async {
     throw Exception("Health update failed");
   }
 }
+
+Future<String> uploadProfilePhoto(File file) async {
+
+  final token = await storage.getToken();
+
+  final request = http.MultipartRequest(
+    "POST",
+    Uri.parse(ApiConstants.baseUrl + "/users/profile/photo"),
+  );
+
+  if (token != null) {
+    request.headers["Authorization"] = "Bearer $token";
+  }
+
+  request.files.add(
+    await http.MultipartFile.fromPath("photo", file.path)
+  );
+
+  final response = await request.send();
+  final res = await http.Response.fromStream(response);
+
+  if (res.statusCode == 200) {
+
+    final data = jsonDecode(res.body);
+
+    return data["photo"];
+
+  } else {
+    throw Exception("Photo upload failed: ${res.body}");
+  }
+}
+
 
 }
