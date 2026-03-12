@@ -6,6 +6,8 @@ import '../../../components/bottom_item.dart';
 import '../screens/history_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/rewards_screen.dart';
+import 'dart:async';
+import 'package:pedometer/pedometer.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -18,6 +20,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final ApiService apiService = ApiService();
   final StepCounter stepCounter = StepCounter();
 
+  StreamSubscription<StepCount>? _stepSubscription;   
+
   int selectedIndex = 0;
 
   String name = "User";
@@ -25,32 +29,81 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int points = 0;
   int todayPoints = 0;
   int goal = 10000;
+  int lastSyncedSteps = 0;
 
   @override
   void initState() {
     super.initState();
+
+    startStepListener();
     loadData();
   }
 
-  Future<void> loadData() async {
-    try {
-      int deviceSteps = await stepCounter.getTodaySteps();
+  @override
+void dispose() {
 
-      await apiService.post("/walk/sync", {"totalSteps": deviceSteps});
+  _stepSubscription?.cancel();
 
-      var dashboard = await apiService.getDashboard();
+  super.dispose();
+}
 
-      setState(() {
-        name = dashboard["user"]?["name"] ?? "User";
-        points = dashboard["user"]?["totalPoints"] ?? 0;
-        goal = dashboard["user"]?["dailyGoal"] ?? 10000;
-        todayPoints = dashboard["todayPoints"] ?? 0;
-        steps = deviceSteps;
-      });
-    } catch (e) {
-      debugPrint(e.toString());
+void startStepListener() {
+
+  _stepSubscription = Pedometer.stepCountStream.listen((StepCount event) async {
+
+    int currentSteps = event.steps;
+
+    print("LIVE STEPS: $currentSteps");
+
+    setState(() {
+      steps = currentSteps;
+    });
+
+    // 200 алхам тутам backend sync
+    if (currentSteps - lastSyncedSteps >= 200) {
+
+      lastSyncedSteps = currentSteps;
+
+      try {
+
+        await apiService.post("/walk/sync", {
+          "total_steps": currentSteps,
+        });
+
+        print("STEPS SYNCED: $currentSteps");
+
+      } catch (e) {
+
+        print("SYNC ERROR: $e");
+
+      }
+
     }
+
+  }, onError: (error) {
+
+    print("STEP STREAM ERROR: $error");
+
+  });
+
+}
+
+  Future<void> loadData() async {
+  try {
+
+    var dashboard = await apiService.getDashboard();
+
+    setState(() {
+      name = dashboard["user"]?["name"] ?? "User";
+      points = dashboard["user"]?["totalPoints"] ?? 0;
+      goal = dashboard["user"]?["dailyGoal"] ?? 10000;
+      todayPoints = dashboard["todayPoints"] ?? 0;
+    });
+
+  } catch (e) {
+    debugPrint(e.toString());
   }
+}
 
   double get progress {
     if (goal == 0) return 0;
@@ -251,7 +304,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               shrinkWrap: true,
               crossAxisSpacing: 14,
               mainAxisSpacing: 14,
-              childAspectRatio: 1.6,
+              childAspectRatio: 1.5,
 
               children: [
                 StatCard(

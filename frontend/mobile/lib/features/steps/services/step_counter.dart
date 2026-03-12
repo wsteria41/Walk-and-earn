@@ -3,26 +3,34 @@ import 'step_permission.dart';
 
 class StepCounter {
 
-  Future<int> getTodaySteps() async {
+  int _steps = 0;
+
+  int get currentSteps => _steps;
+
+  Future<void> startListening(Function(int) onStep) async {
 
     bool granted = await StepPermission.request();
 
     if (!granted) {
       print("Permission denied");
-      return 0;
+      return;
     }
 
     try {
 
-      StepCount event = await Pedometer.stepCountStream.first;
+      Pedometer.stepCountStream.listen((StepCount event) {
 
-      return event.steps;
+        _steps = event.steps;
+
+        print("STEP EVENT: $_steps");
+
+        onStep(_steps); // callback → frontend эсвэл API sync
+
+      });
 
     } catch (e) {
 
       print("STEP ERROR: $e");
-
-      return 0;
 
     }
 

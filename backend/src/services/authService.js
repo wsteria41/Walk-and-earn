@@ -14,7 +14,6 @@ async function register(name, email, password) {
     throw new Error("Password must be at least 6 characters");
   }
 
-  // Email давхардал шалгах
   const [existing] = await pool.query(
     "SELECT id FROM users WHERE email = ?",
     [email]
@@ -24,7 +23,7 @@ async function register(name, email, password) {
     throw new Error("Email already registered");
   }
 
-  // Password hash
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
   await pool.query(

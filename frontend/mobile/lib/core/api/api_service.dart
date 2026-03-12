@@ -61,6 +61,10 @@ class ApiService {
   Future<Map<String, dynamic>> getDashboard() async {
     final response = await get(ApiConstants.dashboard);
 
+
+  print("DASHBOARD STATUS: ${response.statusCode}");
+  print("DASHBOARD BODY: ${response.body}");
+
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
@@ -132,6 +136,25 @@ Future<void> updateHealth(Map<String, dynamic> data) async {
     throw Exception("Health update failed");
   }
 }
+Future<Map<String, dynamic>> getHealth() async {
+
+  final response = await get("/users/health");
+
+  if (response.statusCode == 200) {
+
+    final data = jsonDecode(response.body);
+
+    // backend structure check
+    if (data.containsKey("health")) {
+      return data["health"];
+    }
+
+    return data;
+  }
+
+  throw Exception("Failed to load health data");
+}
+
 
 Future<String> uploadProfilePhoto(File file) async {
 
@@ -157,12 +180,35 @@ Future<String> uploadProfilePhoto(File file) async {
 
     final data = jsonDecode(res.body);
 
-    return data["photo"];
+    return data["photo"] ?? data["profile_photo"];
 
   } else {
     throw Exception("Photo upload failed: ${res.body}");
   }
 }
 
+
+//SYNC STEPS
+Future<Map<String, dynamic>> syncSteps(
+  int totalSteps,
+  double latitude,
+  double longitude,
+) async {
+
+  final response = await post(
+    "/users/sync-steps",
+    {
+      "totalSteps": totalSteps,
+      "latitude": latitude,
+      "longitude": longitude,
+    },
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  }
+
+  throw Exception("Step sync failed: ${response.body}");
+}
 
 }

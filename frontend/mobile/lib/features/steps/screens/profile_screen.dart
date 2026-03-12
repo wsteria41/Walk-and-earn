@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/api/api_service.dart';
+import '../../../features/steps/tab/edit_profile_screen.dart';
+import '../../../features/steps/tab/health_details_screen.dart';
+import '../../../features/steps/tab/help_support_screen.dart';
+import '../../../features/steps/tab/settings_screen.dart';
+import '../../auth/screens/auth_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -86,7 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Container(
                     width: double.infinity,
-                    height: 200,
+                    height: 170,
                     padding: const EdgeInsets.all(20),
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
@@ -120,7 +126,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xff1c1c1e),
+                        gradient: const LinearGradient(
+                          colors: [Color.fromARGB(255, 115, 13, 210), Color.fromARGB(255, 90, 9, 148)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -131,7 +141,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             height: 60,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [Color(0xFF9B2FFF), Color.fromARGB(255, 89, 11, 145)],
+                                colors: [
+                                  Color(0xFF9B2FFF),
+                                  Color.fromARGB(255, 89, 11, 145),
+                                ],
                               ),
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -217,10 +230,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: 20),
 
-              buildMenu("Edit Profile", Icons.person_outline),
-              buildMenu("Health Details", Icons.favorite_border),
-              buildMenu("Settings", Icons.settings),
-              buildMenu("Help & Support", Icons.help_outline),
+              buildMenu("Edit Profile", Icons.person_outline, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const EditProfileScreen(),
+                  ),
+                );
+              }),
+
+              buildMenu("Health Details", Icons.favorite_border, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HealthDetailsScreen(),
+                  ),
+                );
+              }),
+
+              buildMenu("Settings", Icons.settings, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
+                );
+              }),
+
+              buildMenu("Help & Support", Icons.help_outline, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HelpSupportScreen(),
+                  ),
+                );
+              }),
 
               const SizedBox(height: 20),
 
@@ -235,7 +279,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AuthScreen(),
+                      ),
+                      (route) => false,
+                    );
+                  },
                   child: const Text("Logout"),
                 ),
               ),
@@ -305,23 +357,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget buildMenu(String title, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xff1c1c1e),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.purpleAccent),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(title, style: const TextStyle(color: Colors.white)),
-          ),
-          const Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 16),
-        ],
+  Widget buildMenu(String title, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xff1c1c1e),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.purpleAccent),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(title, style: const TextStyle(color: Colors.white)),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white54,
+              size: 16,
+            ),
+          ],
+        ),
       ),
     );
   }

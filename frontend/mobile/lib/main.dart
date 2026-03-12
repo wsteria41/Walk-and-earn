@@ -1,10 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'providers/theme_provider.dart';
+import 'providers/notification_provider.dart';
+
+import 'core/localization/language_controller.dart';
+
 import 'features/auth/screens/splash_screen.dart';
 import 'features/auth/screens/auth_screen.dart';
 import 'features/steps/screens/step_dashboard.dart';
 
 void main() {
-  runApp(const WearnApp());
+  runApp(
+    MultiProvider(
+      providers: [
+
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageController()),
+
+      ],
+      child: const WearnApp(),
+    ),
+  );
 }
 
 class WearnApp extends StatelessWidget {
@@ -12,19 +30,17 @@ class WearnApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: "WEARN",
-      debugShowCheckedModeBanner: false,
 
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.black,
-        primaryColor: const Color(0xFF7A1CBE),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF7A1CBE),
-          brightness: Brightness.dark,
-        ),
-      ),
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: "WEARN",
+
+      themeMode: themeProvider.themeMode,
+
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
 
       home: const SplashScreen(),
 

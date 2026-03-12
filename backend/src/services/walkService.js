@@ -1,10 +1,24 @@
 const pool = require("../config/db");
 
-/*
- CORE LOGIC
- Алхам submit хийх (anti-cheat + points + logging)
-*/
-async function submitSteps(userId, totalSteps, timestamp = new Date()) {
+function calculateDistance(lat1, lon1, lat2, lon2) {
+
+  const R = 6371; // km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+}
+
+async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = new Date()) {
 
   const connection = await pool.getConnection();
 
@@ -12,9 +26,9 @@ async function submitSteps(userId, totalSteps, timestamp = new Date()) {
 
     await connection.beginTransaction();
 
-    // Сүүлчийн алхмын record авах
+    // last record
     const [lastRows] = await connection.query(
-      `SELECT total_steps, recorded_at
+      `SELECT total_steps, recorded_at, latitude, longitude
        FROM step_records
        WHERE user_id = ?
        ORDER BY recorded_at DESC
@@ -24,10 +38,14 @@ async function submitSteps(userId, totalSteps, timestamp = new Date()) {
 
     let previousTotal = 0;
     let previousTime = null;
+    let previousLat = null;
+    let previousLon = null;
 
     if (lastRows.length > 0) {
       previousTotal = lastRows[0].total_steps;
       previousTime = new Date(lastRows[0].recorded_at);
+      previousLat = lastRows[0].latitude;
+      previousLon = lastRows[0].longitude;
     }
 
     let delta = totalSteps - previousTotal;
@@ -38,11 +56,18 @@ async function submitSteps(userId, totalSteps, timestamp = new Date()) {
     // Counter reset detection
     if (delta < 0) {
       suspicious = 1;
-      reason = "Step counter decreased (possible reset)";
+      reason = "Step counter decreased";
       delta = 0;
     }
 
-    // 5 минутанд 1500+ алхам spike
+    // Sudden jump detection
+    if (delta > 3000) {
+      suspicious = 1;
+      reason = "Sudden step jump";
+      delta = 0;
+    }
+
+    // 5 minute spike detection
     if (previousTime) {
 
       const minutesDiff =
@@ -53,9 +78,10 @@ async function submitSteps(userId, totalSteps, timestamp = new Date()) {
         reason = "Unrealistic spike in 5 minutes";
         delta = 0;
       }
+
     }
 
-    // Өдрийн нийт алхам шалгах
+    // Daily limit detection
     const [dailyRows] = await connection.query(
       `SELECT SUM(delta_steps) as daily_total
        FROM step_records
@@ -71,15 +97,89 @@ async function submitSteps(userId, totalSteps, timestamp = new Date()) {
       reason = "Daily step limit exceeded";
     }
 
-    // Step record хадгалах
-    await connection.query(
-      `INSERT INTO step_records
-       (user_id, total_steps, delta_steps, suspicious_flag, suspicion_reason, recorded_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [userId, totalSteps, delta, suspicious, reason, timestamp]
+    // SPEED DETECTION
+    if (previousLat && previousLon && previousTime) {
+
+      const distanceKm = calculateDistance(
+        previousLat,
+        previousLon,
+        latitude,
+        longitude
+      );
+
+      const hours =
+        (new Date(timestamp) - previousTime) / (1000 * 60 * 60);
+
+      if (hours > 0) {
+
+        const speed = distanceKm / hours;
+
+        if (speed > 15) {
+          suspicious = 1;
+          reason = "Unrealistic walking speed";
+          delta = 0;
+        }
+
+      }
+
+    }
+
+    // GPS SPOOF DETECTION (big teleport)
+    if (previousLat && previousLon) {
+
+      const distance = calculateDistance(
+        previousLat,
+        previousLon,
+        latitude,
+        longitude
+      );
+
+      if (distance > 2) {
+        suspicious = 1;
+        reason = "GPS spoof detected";
+        delta = 0;
+      }
+
+    }
+
+    // PATTERN DETECTION
+    const [patternRows] = await connection.query(
+      `SELECT delta_steps
+       FROM step_records
+       WHERE user_id = ?
+       ORDER BY recorded_at DESC
+       LIMIT 10`,
+      [userId]
     );
 
-    // Points тооцоолох
+    if (patternRows.length >= 5) {
+
+      const values = patternRows.map(r => r.delta_steps);
+
+      values.push(delta);
+
+      const max = Math.max(...values);
+      const min = Math.min(...values);
+
+      const variance = max - min;
+
+      if (variance < 5 && max > 20) {
+        suspicious = 1;
+        reason = "Suspicious step pattern";
+        delta = 0;
+      }
+
+    }
+
+    // Save record
+    await connection.query(
+      `INSERT INTO step_records
+       (user_id, total_steps, delta_steps, suspicious_flag, suspicion_reason, latitude, longitude, recorded_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userId, totalSteps, delta, suspicious, reason, latitude, longitude, timestamp]
+    );
+
+    // Points logic
     let pointsEarned = 0;
 
     if (!suspicious && delta > 0) {
@@ -106,6 +206,7 @@ async function submitSteps(userId, totalSteps, timestamp = new Date()) {
          WHERE id = ?`,
         [pointsEarned, remainingSteps, userId]
       );
+
     }
 
     await connection.commit();
@@ -130,15 +231,17 @@ async function submitSteps(userId, totalSteps, timestamp = new Date()) {
     connection.release();
 
   }
+
 }
 
+async function syncSteps(userId, totalSteps, latitude, longitude) {
 
-/*
- API-д ашиглах sync function
-*/
-async function syncSteps(userId, totalSteps) {
-
-  const result = await submitSteps(userId, totalSteps);
+  const result = await submitSteps(
+    userId,
+    totalSteps,
+    latitude,
+    longitude
+  );
 
   return {
     previousSteps: result.previousTotal,
@@ -150,10 +253,6 @@ async function syncSteps(userId, totalSteps) {
 
 }
 
-
-/*
- History авах
-*/
 async function getHistory(userId) {
 
   const [rows] = await pool.query(
@@ -171,10 +270,6 @@ async function getHistory(userId) {
 
 }
 
-
-/*
- Өдрийн summary
-*/
 async function getDailySummary(userId) {
 
   const [rows] = await pool.query(
@@ -199,7 +294,6 @@ async function getDailySummary(userId) {
   };
 
 }
-
 
 module.exports = {
   syncSteps,

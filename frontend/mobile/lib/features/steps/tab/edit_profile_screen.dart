@@ -33,19 +33,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future loadProfile() async {
 
-    final profile = await api.getProfile();
+    try {
 
-    setState(() {
+      final profile = await api.getProfile();
 
-      nameController.text = profile["name"] ?? "";
-      emailController.text = profile["email"] ?? "";
-      phoneController.text = profile["phone"] ?? "";
-      locationController.text = profile["location"] ?? "";
+      setState(() {
 
-      profilePhoto = profile["profile_photo"];
+        profilePhoto = profile["profile_photo"];
+        emailController.text = profile["email"] ?? ""; 
 
-      loading = false;
-    });
+        loading = false;
+      });
+
+    } catch(e){
+
+      setState(() {
+        loading = false;
+      });
+
+    }
   }
 
   Future pickImage() async {
@@ -65,45 +71,145 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     if(selectedImage == null) return;
 
-    final url = await api.uploadProfilePhoto(selectedImage!);
+    try {
 
-    setState(() {
-      profilePhoto = url;
-    });
+      final url = await api.uploadProfilePhoto(selectedImage!);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Photo updated"))
-    );
+      setState(() {
+        profilePhoto = url;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Photo updated"))
+      );
+
+    } catch(e){
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Upload failed"))
+      );
+
+    }
   }
 
   Future saveProfile() async {
 
-    await api.updateProfile({
-      "name": nameController.text,
-      "phone": phoneController.text,
-      "location": locationController.text
-    });
+    try {
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Profile updated"))
+      await api.updateProfile({
+        "name": nameController.text,
+        "phone": phoneController.text,
+        "location": locationController.text
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Profile updated"))
+      );
+
+    } catch(e){
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Update failed"))
+      );
+
+    }
+  }
+
+  Widget buildField(String label, TextEditingController controller, {bool readOnly = false}){
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        Text(
+          label.toUpperCase(),
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 12,
+            fontWeight: FontWeight.bold
+          ),
+        ),
+
+        const SizedBox(height:6),
+
+        TextField(
+          controller: controller,
+          readOnly: readOnly,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: const Color(0xff1f2937),
+            contentPadding: const EdgeInsets.symmetric(horizontal:16, vertical:14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide.none
+            )
+          ),
+        ),
+
+        const SizedBox(height:18)
+      ],
     );
   }
 
-  Widget buildField(String label, TextEditingController controller){
+  Widget buildAvatar(){
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom:16),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: const Color(0xff1f2937),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12)
-          )
+    ImageProvider? image;
+
+    if(selectedImage != null){
+      image = FileImage(selectedImage!);
+    } else if(profilePhoto != null){
+      image = NetworkImage(profilePhoto!);
+    }
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+
+        Container(
+          width: 110,
+          height: 110,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [Color(0xff9333EA), Color(0xff7E22CE)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight
+            ),
+            image: image != null
+                ? DecorationImage(image: image, fit: BoxFit.cover)
+                : null
+          ),
+          child: image == null
+              ? const Center(
+                  child: Text(
+                    "U",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold
+                    ),
+                  ),
+                )
+              : null,
         ),
-      ),
+
+        Positioned(
+          bottom: 0,
+          right: 0,
+          child: GestureDetector(
+            onTap: pickImage,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xff9333EA),
+                shape: BoxShape.circle
+              ),
+              padding: const EdgeInsets.all(8),
+              child: const Icon(Icons.camera_alt, size:18, color: Colors.white),
+            ),
+          ),
+        )
+      ],
     );
   }
 
@@ -112,54 +218,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     if(loading){
       return const Scaffold(
+        backgroundColor: Colors.black,
         body: Center(child: CircularProgressIndicator())
       );
     }
 
     return Scaffold(
+
       backgroundColor: Colors.black,
+
       appBar: AppBar(
-        title: const Text("Edit Profile"),
-        backgroundColor: Colors.black
+        backgroundColor: Colors.black,
+        elevation: 0,
+        title: const Text("Edit Profile")
       ),
 
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
 
-            Stack(
-              children: [
+            const SizedBox(height:10),
 
-                CircleAvatar(
-                  radius: 45,
-                  backgroundImage: selectedImage != null
-                      ? FileImage(selectedImage!)
-                      : (profilePhoto != null
-                          ? NetworkImage(profilePhoto!) as ImageProvider
-                          : null),
-                  child: profilePhoto == null && selectedImage == null
-                      ? const Text("B", style: TextStyle(fontSize: 30))
-                      : null,
-                ),
-
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: GestureDetector(
-                    onTap: pickImage,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.purple,
-                        shape: BoxShape.circle
-                      ),
-                      padding: const EdgeInsets.all(8),
-                      child: const Icon(Icons.camera_alt, color: Colors.white)
-                    ),
-                  ),
-                )
-              ],
-            ),
+            buildAvatar(),
 
             const SizedBox(height:10),
 
@@ -167,27 +248,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               onPressed: pickImage,
               child: const Text(
                 "Change Photo",
-                style: TextStyle(color: Colors.purple),
-              )
+                style: TextStyle(color: Color(0xff9333EA)),
+              ),
             ),
 
             const SizedBox(height:30),
 
             buildField("Full Name", nameController),
-            buildField("Email Address", emailController),
+
+            buildField("Email Address", emailController, readOnly: true),
+
             buildField("Phone Number", phoneController),
+
             buildField("Location", locationController),
 
-            const SizedBox(height:20),
+            const SizedBox(height:10),
 
-            ElevatedButton(
-              onPressed: saveProfile,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
-                minimumSize: const Size(double.infinity,50)
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+
+                onPressed: saveProfile,
+
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xff9333EA),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)
+                  )
+                ),
+
+                child: const Text(
+                  "Save Changes",
+                  style: TextStyle(fontSize:16)
+                ),
               ),
-              child: const Text("Save Changes")
             )
+
           ],
         ),
       ),
