@@ -1,4 +1,5 @@
 
+const upload = require("../middlewares/upload");
 const userService = require("../services/userService");
 
 async function getWeeklyLeaderboard(req, res) {
@@ -112,6 +113,25 @@ async function getTotalStats(req, res) {
   }
 }
 
+async function uploadPhoto(req, res) {
+  try {
+    const userId = req.user.id;
+
+    const photoUrl = req.file.location;
+
+    await userService.updateProfilePhoto(userId, photoUrl);
+
+    res.json({
+      message: "Photo uploaded",
+      photo: photoUrl
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Photo upload failed" });
+  }
+}
+
 module.exports = {
   getWeeklyLeaderboard,
   getMyWeeklyRank,
@@ -122,5 +142,6 @@ module.exports = {
   getProfile,
   updateProfile,
   updateHealth,
-  getTotalStats
+  getTotalStats,
+  uploadPhoto
 };

@@ -242,6 +242,17 @@ async function getTotalStats(userId) {
   return rows[0];
 }
 
+
+async function updateProfilePhoto(userId, photoUrl) {
+
+  await pool.query(
+    `UPDATE users 
+     SET profile_photo = ?
+     WHERE id = ?`,
+    [photoUrl, userId]
+  );
+
+}
 module.exports = {
   getWeeklyLeaderboard,
   getMyWeeklyRank,
@@ -252,5 +263,6 @@ module.exports = {
   getUserProfile,
   updateProfile,
   updateHealth,
-  getTotalStats
+  getTotalStats,
+  updateProfilePhoto
 };

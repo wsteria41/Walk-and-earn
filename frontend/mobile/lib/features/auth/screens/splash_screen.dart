@@ -85,14 +85,14 @@ class _SplashScreenState extends State<SplashScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
 
-              /// APP NAME
+              //APP NAME
               ShaderMask(
                 shaderCallback: (bounds) {
                   return const LinearGradient(
                     colors: [
                       Colors.white,
                       Color(0xFFD4B4FF),
-                      Color(0xFF7A1CBE),
+                      Color.fromARGB(255, 88, 15, 140),
                     ],
                   ).createShader(bounds);
                 },
@@ -109,7 +109,7 @@ class _SplashScreenState extends State<SplashScreen>
 
               const SizedBox(height: 20),
 
-              /// TAGLINE
+              //TAGLINE
               const Text(
                 "WALK. EARN. REPEAT.",
                 style: TextStyle(
@@ -122,7 +122,7 @@ class _SplashScreenState extends State<SplashScreen>
 
               const SizedBox(height: 60),
 
-              /// LOADING DOTS
+              //LOADING DOTS
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

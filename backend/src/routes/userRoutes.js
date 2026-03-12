@@ -1,6 +1,7 @@
 const express= require("express");
 const router = express.Router();
 
+const upload = require("../middlewares/upload");
 const authMiddleware = require("../middlewares/authMiddleware");
 const userController = require("../controllers/userController");
 const pool = require("../config/db");
@@ -20,9 +21,10 @@ router.get("/leaderboard", authMiddleware, userController.getLeaderboard);
 router.get("/stats/daily", authMiddleware, userController.getDailyStats);
 router.get("/dashboard", authMiddleware, userController.getDashboard);
 router.get("/stats/total", authMiddleware, userController.getTotalStats);
-router.post("/goal", authMiddleware, userController.updateGoal);
 router.get("/profile", authMiddleware, userController.getProfile);
 router.put("/profile", authMiddleware, userController.updateProfile);
 router.put("/health", authMiddleware, userController.updateHealth);
+router.post("/goal", authMiddleware, userController.updateGoal);
+router.post("/profile/photo", authMiddleware, upload.single("photo"), userController.uploadPhoto);
 
 module.exports = router;
