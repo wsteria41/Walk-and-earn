@@ -114,6 +114,9 @@ async function getTotalStats(req, res) {
 
 async function uploadPhoto(req, res) {
   try {
+
+    console.log("FILE:", req.file);
+
     const userId = req.user.id;
 
     if (!req.file) {
@@ -121,6 +124,8 @@ async function uploadPhoto(req, res) {
     }
 
     const photoUrl = await uploadFile(req.file);
+
+    console.log("UPLOADED URL:", photoUrl);
 
     await userService.updateProfilePhoto(userId, photoUrl);
 
@@ -130,7 +135,7 @@ async function uploadPhoto(req, res) {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("UPLOAD ERROR:", error);
     res.status(500).json({ message: "Photo upload failed" });
   }
 }
