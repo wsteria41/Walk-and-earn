@@ -1,16 +1,21 @@
-const multer = require("multer");
-const multerS3 = require("multer-s3");
-const s3 = require("../config/spaces");
+const { Upload } = require("@aws-sdk/lib-storage");
+const spacesClient = require("../config/spaces");
 
-const upload = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: "wearn-profile-images",
-    acl: "public-read",
-    key: function (req, file, cb) {
-      cb(null, Date.now().toString() + "-" + file.originalname);
+async function uploadFile(file) {
+
+  const upload = new Upload({
+    client: spacesClient,
+    params: {
+      Bucket: "wearn-profile-images",
+      Key: `profiles/${Date.now()}-${file.originalname}`,
+      Body: file.buffer,
+      ACL: "public-read"
     }
-  })
-});
+  });
 
-module.exports = upload;
+  const result = await upload.done();
+
+  return result.Location;
+}
+
+module.exports = { uploadFile };

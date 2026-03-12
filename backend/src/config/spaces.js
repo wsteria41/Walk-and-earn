@@ -1,11 +1,12 @@
-const AWS = require("aws-sdk");
+const { S3Client } = require("@aws-sdk/client-s3");
 
-const spacesEndpoint = new AWS.Endpoint("sgp1.digitaloceanspaces.com");
-
-const s3 = new AWS.S3({
-  endpoint: spacesEndpoint,
-  accessKeyId: process.env.DO_SPACE_KEY,
-  secretAccessKey: process.env.DO_SPACE_SECRET
+const spacesClient = new S3Client({
+  endpoint: "https://sgp1.digitaloceanspaces.com",
+  region: "sgp1",
+  credentials: {
+    accessKeyId: process.env.DO_SPACE_KEY,
+    secretAccessKey: process.env.DO_SPACE_SECRET
+  }
 });
 
-module.exports = s3;
+module.exports = spacesClient;
