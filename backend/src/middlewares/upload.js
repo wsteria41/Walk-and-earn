@@ -1,21 +1,12 @@
-const { Upload } = require("@aws-sdk/lib-storage");
-const spacesClient = require("../config/spaces");
+const multer = require("multer");
 
-async function uploadFile(file) {
+const storage = multer.memoryStorage();
 
-  const upload = new Upload({
-    client: spacesClient,
-    params: {
-      Bucket: "wearn-profile-images",
-      Key: `profiles/${Date.now()}-${file.originalname}`,
-      Body: file.buffer,
-      ACL: "public-read"
-    }
-  });
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024
+  }
+});
 
-  const result = await upload.done();
-
-  return result.Location;
-}
-
-module.exports = { uploadFile };
+module.exports = upload;

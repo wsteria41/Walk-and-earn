@@ -1,5 +1,4 @@
-
-const upload = require("../middlewares/upload");
+const { uploadFile } = require("../services/spacesUpload");
 const userService = require("../services/userService");
 
 async function getWeeklyLeaderboard(req, res) {
@@ -117,7 +116,11 @@ async function uploadPhoto(req, res) {
   try {
     const userId = req.user.id;
 
-    const photoUrl = req.file.location;
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const photoUrl = await uploadFile(req.file);
 
     await userService.updateProfilePhoto(userId, photoUrl);
 
