@@ -33,7 +33,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     int sum = 0;
     for (var day in stats) {
       int steps = int.tryParse(day["steps"].toString()) ?? 0;
-      sum += (steps / 100).floor();
+      sum += (steps / 1000).floor();
     }
     return sum;
   }

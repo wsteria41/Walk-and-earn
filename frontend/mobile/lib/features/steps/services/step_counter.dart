@@ -1,4 +1,4 @@
-import 'package:pedometer/pedometer.dart';
+import 'package:health/health.dart';
 import 'step_permission.dart';
 
 class StepCounter {
@@ -6,6 +6,8 @@ class StepCounter {
   int _steps = 0;
 
   int get currentSteps => _steps;
+
+  final HealthFactory health = HealthFactory();
 
   Future<void> startListening(Function(int) onStep) async {
 
@@ -18,22 +20,48 @@ class StepCounter {
 
     try {
 
-      Pedometer.stepCountStream.listen((StepCount event) {
+      //ymar turliin health data 
+      final types = [
+        HealthDataType.STEPS,
+      ];
 
-        _steps = event.steps;
+      //permission avna
+      bool requested = await health.requestAuthorization(types);
 
-        print("STEP EVENT: $_steps");
+      if (!requested) {
+        print("Health permission denied");
+        return;
+      }
 
-        onStep(_steps); // callback → frontend эсвэл API sync
+      //unuudriin 00:00
+      DateTime now = DateTime.now();
+      DateTime midnight = DateTime(now.year, now.month, now.day);
 
-      });
+      //health data avah
+      List<HealthDataPoint> healthData =
+          await health.getHealthDataFromTypes(
+        midnight,
+        now,
+        types,
+      );
+
+      int totalSteps = 0;
+
+      for (var point in healthData) {
+        totalSteps += (point.value as num).toInt();
+      }
+
+      _steps = totalSteps;
+
+      print("TODAY STEPS: $_steps");
+
+      //callback → UI / API sync
+      onStep(_steps);
 
     } catch (e) {
 
       print("STEP ERROR: $e");
 
     }
-
   }
-
 }

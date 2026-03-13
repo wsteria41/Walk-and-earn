@@ -7,7 +7,6 @@ import '../screens/history_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/rewards_screen.dart';
 import 'dart:async';
-import 'package:pedometer/pedometer.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -24,6 +23,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int selectedIndex = 0;
 
   String name = "User";
+  String? avatar;
+  DateTime? lastResetDate;
   int steps = 0;
   int points = 0;
   int todayPoints = 0;
@@ -47,90 +48,88 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void startStepListener() {
+    _stepSubscription = Pedometer.stepCountStream.listen(
+      (StepCount event) async {
+        int currentSteps = event.steps;
+        DateTime now = DateTime.now();
 
-  _stepSubscription =
-      Pedometer.stepCountStream.listen((StepCount event) async {
+        if (lastResetDate == null ||
+            lastResetDate!.day != now.day ||
+            lastResetDate!.month != now.month ||
+            lastResetDate!.year != now.year) {
+          baseSteps = currentSteps;
+          lastResetDate = now;
+        }
 
-    int currentSteps = event.steps;
+        print("LIVE STEPS: $currentSteps");
 
-    print("LIVE STEPS: $currentSteps");
+        if (!mounted) return;
 
-    if (!mounted) return;
+        if (baseSteps == 0) {
+          baseSteps = currentSteps;
+        }
 
-    setState(() {
-      steps = currentSteps;
-    });
-
-    // 👇 эхний sync
-    if (lastSyncedSteps == 0) {
-
-      lastSyncedSteps = currentSteps;
-
-      await apiService.post("/walk/sync", {
-        "total_steps": currentSteps
-      });
-
-      print("INITIAL SYNC: $currentSteps");
-
-      return;
-    }
-
-    // 👇 200 алхам тутам sync
-    if (currentSteps - lastSyncedSteps >= 200) {
-
-      lastSyncedSteps = currentSteps;
-
-      try {
-
-        await apiService.post("/walk/sync", {
-          "total_steps": currentSteps
+        setState(() {
+          steps = currentSteps - baseSteps;
         });
 
-        print("STEPS SYNCED: $currentSteps");
+        if (lastSyncedSteps == 0) {
+          lastSyncedSteps = currentSteps;
 
-      } catch (e) {
+          await apiService.post("/walk/sync", {"total_steps": currentSteps});
 
-        print("SYNC ERROR: $e");
+          print("INITIAL SYNC: $currentSteps");
 
-      }
+          return;
+        }
 
-    }
+        if (currentSteps - lastSyncedSteps >= 200) {
+          lastSyncedSteps = currentSteps;
 
-  }, onError: (error) {
+          try {
+            await apiService.post("/walk/sync", {"total_steps": currentSteps});
 
-    print("STEP STREAM ERROR: $error");
-
-  });
-
-}
-
-Future<void> syncCurrentSteps() async {
-  try {
-
-    if (steps == 0) return;
-
-    await apiService.post("/walk/sync", {
-      "total_steps": steps
-    });
-
-    lastSyncedSteps = steps;
-
-    print("INITIAL SYNC: $steps");
-
-  } catch (e) {
-    print("INITIAL SYNC ERROR: $e");
+            print("STEPS SYNCED: $currentSteps");
+          } catch (e) {
+            print("SYNC ERROR: $e");
+          }
+        }
+      },
+      onError: (error) {
+        print("STEP STREAM ERROR: $error");
+      },
+    );
   }
-}
+
+  Future<void> syncCurrentSteps() async {
+    try {
+      if (steps == 0) return;
+
+      await apiService.post("/walk/sync", {"total_steps": steps});
+
+      lastSyncedSteps = steps;
+
+      print("INITIAL SYNC: $steps");
+    } catch (e) {
+      print("INITIAL SYNC ERROR: $e");
+    }
+  }
 
   Future<void> loadData() async {
     try {
       var dashboard = await apiService.getDashboard();
 
       setState(() {
-        name = dashboard["user"]?["name"] ?? "User";
+        name =
+            dashboard["user"]?["name"] ??
+            dashboard["user"]?["full_name"] ??
+            "User";
         points = dashboard["user"]?["totalPoints"] ?? 0;
         goal = dashboard["user"]?["dailyGoal"] ?? 10000;
         todayPoints = dashboard["todayPoints"] ?? 0;
+
+        steps = dashboard["todaySteps"] ?? 0;
+        avatar = dashboard["user"]?["profile_photo"];
       });
     } catch (e) {
       debugPrint(e.toString());
@@ -268,10 +267,17 @@ Future<void> syncCurrentSteps() async {
                       },
 
                       child: CircleAvatar(
-                        backgroundColor: Colors.purpleAccent,
-                        child: Text(
-                          name.isNotEmpty ? name[0].toUpperCase() : "U",
-                        ),
+                        radius: 18,
+                        backgroundColor: Colors.white24,
+                        backgroundImage: (avatar != null && avatar!.isNotEmpty)
+                            ? NetworkImage(avatar!)
+                            : null,
+                        child: (avatar == null || avatar!.isEmpty)
+                            ? Text(
+                                name.isNotEmpty ? name[0].toUpperCase() : "U",
+                                style: const TextStyle(color: Colors.white),
+                              )
+                            : null,
                       ),
                     ),
                   ],
@@ -358,8 +364,8 @@ Future<void> syncCurrentSteps() async {
                 ),
 
                 StatCard(
-                  title: "Points Today",
-                  value: "$todayPoints",
+                  title: "Total points",
+                  value: "$points",
                   icon: Icons.star,
                 ),
               ],

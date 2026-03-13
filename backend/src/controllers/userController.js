@@ -44,7 +44,8 @@ async function getDashboard(req, res) {
   try {
     const userId = req.user.id;
     const data = await userService.getUserDashboard(userId);
-    res.json(data);
+    res.status(200).json(data);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to load dashboard" });

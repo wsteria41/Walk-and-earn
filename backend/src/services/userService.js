@@ -123,19 +123,21 @@ async function getDailyStats(userId, days = 7) {//user iin suuliin N honogiin al
 
 async function getUserDashboard(userId) {
 
-  /// USER PROFILE
   const [userRows] = await pool.query(
     `
-    SELECT id, name, email, total_points, daily_goal
+    SELECT id, name, email, total_points, daily_goal, profile_photo
     FROM users
     WHERE id = ?
     `,
     [userId]
   );
 
+  if (!userRows.length) {
+    throw new Error("User not found");
+  }
+
   const user = userRows[0];
 
-  /// TODAY STEPS
   const [todayRows] = await pool.query(
     `
     SELECT IFNULL(SUM(delta_steps),0) AS today_steps
@@ -148,7 +150,6 @@ async function getUserDashboard(userId) {
 
   const todaySteps = Number(todayRows[0].today_steps);
 
-  /// WEEKLY STEPS
   const [weeklyRows] = await pool.query(
     `
     SELECT IFNULL(SUM(delta_steps),0) AS weekly_steps
@@ -169,14 +170,14 @@ async function getUserDashboard(userId) {
       name: user.name,
       email: user.email,
       totalPoints: user.total_points,
-      dailyGoal: user.daily_goal
+      dailyGoal: user.daily_goal,
+      profile_photo: user.profile_photo
     },
     todaySteps,
     weeklySteps,
     todayPoints
   };
 }
-
 async function updateGoal(userId, goal) {//user iin daily goal-g shineer tohiruulah
       await pool.query(
         `

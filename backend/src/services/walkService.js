@@ -259,7 +259,7 @@ async function getHistory(userId, days = 7) {
     `SELECT 
         DATE(recorded_at) AS date,
         MAX(total_steps) AS steps,
-        FLOOR(MAX(total_steps) / 1000) AS points
+        SUM(delta_steps) / 1000
      FROM step_records
      WHERE user_id = ?
      GROUP BY DATE(recorded_at)
