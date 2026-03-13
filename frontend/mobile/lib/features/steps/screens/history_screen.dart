@@ -4,7 +4,6 @@ import 'package:logger/logger.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
-  
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -35,8 +34,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   int get totalPoints {
     int sum = 0;
     for (var day in stats) {
-      int steps = int.tryParse(day["steps"].toString()) ?? 0;
-      sum += (steps / 1000).floor();
+      int pts = int.tryParse(day["points"].toString()) ?? 0;
+      sum += pts;
     }
     return sum;
   }
@@ -44,7 +43,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   int get activeDays {
     int count = 0;
     for (var day in stats) {
-      int steps = int.tryParse(day["total_steps"].toString()) ?? 0;
+      int steps = int.tryParse(day["steps"].toString()) ?? 0;
       if (steps > 0) {
         count++;
       }
@@ -52,41 +51,36 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return count;
   }
 
-String formatDate(String? isoDate) {
+  String formatDate(String? isoDate) {
+    if (isoDate == null || isoDate.isEmpty) {
+      return "Unknown";
+    }
 
-  if (isoDate == null || isoDate.isEmpty) {
-    return "Unknown";
+    DateTime? d = DateTime.tryParse(isoDate);
+    if (d == null) return "Unknown";
+
+    d = d.toLocal();
+    DateTime now = DateTime.now();
+
+    if (d.year == now.year && d.month == now.month && d.day == now.day) {
+      return "Today";
+    }
+
+    if (d.year == now.year &&
+        d.month == now.month &&
+        d.day == now.day - 1) {
+      return "Yesterday";
+    }
+
+    return "${d.month}/${d.day}";
   }
-
-  DateTime? d = DateTime.tryParse(isoDate);
-
-  if (d == null) {
-    return "Unknown";
-  }
-
-  d = d.toLocal();
-
-  DateTime now = DateTime.now();
-
-  if (d.year == now.year && d.month == now.month && d.day == now.day) {
-    return "Today";
-  }
-
-  if (d.year == now.year &&
-      d.month == now.month &&
-      d.day == now.day - 1) {
-    return "Yesterday";
-  }
-
-  return "${d.month}/${d.day}";
-}
 
   Future<void> loadHistory() async {
     try {
       final data = await api.getHistory();
 
- log.i("HISTORY LENGTH: ${data.length}");
-    log.d("HISTORY DATA: $data");
+      log.i("HISTORY LENGTH: ${data.length}");
+      log.d("HISTORY DATA: $data");
 
       if (!mounted) return;
 
@@ -144,7 +138,6 @@ String formatDate(String? isoDate) {
             ...stats.map((day) {
               int steps = int.tryParse(day["steps"].toString()) ?? 0;
               int points = int.tryParse(day["points"].toString()) ?? 0;
-
               String date = formatDate(day["date"]);
 
               return activityCard(date, steps, points);
@@ -164,15 +157,12 @@ String formatDate(String? isoDate) {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-
       child: Container(
         padding: const EdgeInsets.all(18),
-
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           color: const Color(0xFF1E293B),
         ),
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -187,18 +177,15 @@ String formatDate(String? isoDate) {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 6,
                   ),
-
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     color: Colors.purple,
                   ),
-
                   child: Text(
                     "+$points pts",
                     style: const TextStyle(color: Colors.white),
@@ -213,9 +200,7 @@ String formatDate(String? isoDate) {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 columnStat("STEPS", steps.toString()),
-
                 columnStat("CALORIES", calories.toString()),
-
                 columnStat("DISTANCE", "${km.toStringAsFixed(2)} km"),
               ],
             ),
@@ -255,14 +240,12 @@ String formatDate(String? isoDate) {
   Widget weeklySummaryCard() {
     return Container(
       padding: const EdgeInsets.all(20),
-
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: const LinearGradient(
           colors: [Color(0xFF7C3AED), Color(0xFF9333EA)],
         ),
       ),
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -277,9 +260,7 @@ String formatDate(String? isoDate) {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               summaryStat("STEPS", totalSteps.toString()),
-
               summaryStat("POINTS", "+$totalPoints"),
-
               summaryStat("DAYS", "$activeDays/7"),
             ],
           ),
