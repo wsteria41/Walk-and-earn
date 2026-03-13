@@ -16,6 +16,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final ApiService apiService = ApiService();
 
+  String profilePhoto = "";
   String name = "";
   String email = "";
   int points = 0;
@@ -50,6 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         /// USER
         name = profile["name"] ?? "";
         email = profile["email"] ?? "";
+        profilePhoto = profile["profile_photo"] ?? "";
 
         points = int.tryParse(profile["totalPoints"].toString()) ?? 0;
 
@@ -126,7 +128,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color.fromARGB(255, 115, 13, 210), Color.fromARGB(255, 90, 9, 148)],
+                          colors: [
+                            Color.fromARGB(255, 115, 13, 210),
+                            Color.fromARGB(255, 90, 9, 148),
+                          ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -139,23 +144,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFF9B2FFF),
-                                  Color.fromARGB(255, 89, 11, 145),
-                                ],
-                              ),
                               borderRadius: BorderRadius.circular(16),
+                              color: Colors.purple,
                             ),
-                            child: Center(
-                              child: Text(
-                                name.isNotEmpty ? name[0].toUpperCase() : "U",
-                                style: const TextStyle(
-                                  fontSize: 26,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: profilePhoto.isNotEmpty
+                                  ? Image.network(
+                                      profilePhoto,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Center(
+                                      child: Text(
+                                        name.isNotEmpty
+                                            ? name[0].toUpperCase()
+                                            : "U",
+                                        style: const TextStyle(
+                                          fontSize: 26,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ),
 

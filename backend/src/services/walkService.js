@@ -256,7 +256,7 @@ async function getHistory(userId, days = 7) {
   const [rows] = await pool.query(
     `SELECT 
         DATE(recorded_at) AS date,
-        MAX(total_steps) AS steps,
+        SUM(delta_steps) AS steps,
         FLOOR(SUM(delta_steps) / 1000) AS points
      FROM step_records
      WHERE user_id = ?

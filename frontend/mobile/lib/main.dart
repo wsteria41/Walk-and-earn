@@ -29,7 +29,8 @@ class WearnApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+
+    final themeProvider = context.watch<ThemeProvider>();
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -43,7 +44,6 @@ class WearnApp extends StatelessWidget {
       locale: context.watch<LanguageController>().locale,
 
       supportedLocales: AppLocalizations.supportedLocales,
-
       localizationsDelegates: AppLocalizations.localizationsDelegates,
 
       home: const SplashScreen(),

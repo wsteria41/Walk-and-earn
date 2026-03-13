@@ -233,6 +233,7 @@ async function getTotalStats(userId) {
     `
     SELECT 
       IFNULL(SUM(delta_steps),0) AS totalSteps,
+      FLOOR(IFNULL(SUM(delta_steps),0) / 1000) AS rewards,
       COUNT(DISTINCT DATE(recorded_at)) AS activeDays
     FROM step_records
     WHERE user_id = ?
