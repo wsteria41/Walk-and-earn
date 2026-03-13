@@ -2,7 +2,7 @@ const pool = require("../config/db");
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
 
-  const R = 6371; // km
+  const R = 6371; 
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
 
@@ -55,13 +55,11 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
 
     // Counter reset detection
     if (delta < 0) {
-      suspicious = 1;
-      reason = "Step counter decreased";
       delta = 0;
     }
 
     // Sudden jump detection
-    if (delta > 3000) {
+    if (delta > 5000) {
       suspicious = 1;
       reason = "Sudden step jump";
       delta = 0;
@@ -124,7 +122,7 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
 
     }
 
-    // GPS SPOOF DETECTION (big teleport)
+    //GPS SPOOF DETECTION 
     if (previousLat != null && previousLon != null) {
 
       const distance = calculateDistance(
@@ -134,7 +132,7 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
         longitude
       );
 
-      if (distance > 2) {
+      if (distance > 2 && delta > 200) {
         suspicious = 1;
         reason = "GPS spoof detected";
         delta = 0;
@@ -142,7 +140,7 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
 
     }
 
-    // PATTERN DETECTION
+    //PATTERN DETECTION
     const [patternRows] = await connection.query(
       `SELECT delta_steps
        FROM step_records
@@ -171,7 +169,7 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
 
     }
 
-    // Save record
+    //Save record
     await connection.query(
       `INSERT INTO step_records
        (user_id, total_steps, delta_steps, suspicious_flag, suspicion_reason, latitude, longitude, recorded_at)
@@ -179,7 +177,7 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
       [userId, totalSteps, delta, suspicious, reason, latitude, longitude, timestamp]
     );
 
-    // Points logic
+    //Points logic
     let pointsEarned = 0;
 
     if (!suspicious && delta > 0) {

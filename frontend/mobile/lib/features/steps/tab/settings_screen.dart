@@ -4,11 +4,11 @@ import 'package:provider/provider.dart';
 import '../../../providers/theme_provider.dart';
 import '../../../providers/language_provider.dart';
 import '../../../providers/notification_provider.dart';
-import '../../../core/localization/language_controller.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
+  
   @override
   Widget build(BuildContext context) {
 

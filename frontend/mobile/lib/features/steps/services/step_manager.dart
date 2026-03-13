@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'package:health/health.dart';
+import 'package:logger/logger.dart';
 import 'step_service.dart';
 import 'step_permission.dart';
+import 'package:geolocator/geolocator.dart';
 
 class StepManager {
-
   final StepService stepService = StepService();
-  final HealthFactory health = HealthFactory();
+  final Health health = Health();
+
+  final Logger log = Logger();
 
   Timer? _timer;
 
@@ -17,60 +20,49 @@ class StepManager {
 
   /// START TRACKING
   Future<void> startTracking() async {
-
     bool granted = await StepPermission.request();
 
     if (!granted) {
-      print("Activity recognition permission denied");
+      log.w("Activity recognition permission denied");
       return;
     }
 
     try {
-
-      final types = [
-        HealthDataType.STEPS,
-      ];
+      final types = [HealthDataType.STEPS];
 
       bool requested = await health.requestAuthorization(types);
 
       if (!requested) {
-        print("Health permission denied");
+        log.w("Health permission denied");
         return;
       }
 
       /// 10 секунд тутам алхалт шалгана
       _timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
-
         await _readSteps();
-
       });
 
+      log.i("Step tracking started");
     } catch (e) {
-
-      print("STEP TRACK ERROR: $e");
-
+      log.e("STEP TRACK ERROR", error: e);
     }
-
   }
 
-  /// STOP TRACKING
   void stopTracking() {
     _timer?.cancel();
+
+    log.i("Step tracking stopped");
   }
 
-  /// HEALTH DATA АВАХ
   Future<void> _readSteps() async {
-
     try {
-
       DateTime now = DateTime.now();
       DateTime midnight = DateTime(now.year, now.month, now.day);
 
-      List<HealthDataPoint> data =
-          await health.getHealthDataFromTypes(
-        midnight,
-        now,
-        [HealthDataType.STEPS],
+      List<HealthDataPoint> data = await health.getHealthDataFromTypes(
+        startTime: midnight,
+        endTime: now,
+        types: [HealthDataType.STEPS],
       );
 
       int totalSteps = 0;
@@ -81,37 +73,39 @@ class StepManager {
 
       _currentSteps = totalSteps;
 
-      print("TODAY STEPS: $_currentSteps");
-
+      log.d("TODAY STEPS: $_currentSteps");
     } catch (e) {
-
-      print("READ STEP ERROR: $e");
-
+      log.e("READ STEP ERROR", error: e);
     }
+  }
+
+Future<void> syncSteps() async {
+
+  if (_currentSteps == 0) return;
+
+  if (_currentSteps == _lastSyncedSteps) return;
+
+  try {
+
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    await stepService.syncSteps(
+      _currentSteps,
+      position.latitude,
+      position.longitude,
+    );
+
+    _lastSyncedSteps = _currentSteps;
+
+    log.i("STEPS SYNCED: $_currentSteps");
+
+  } catch (e) {
+
+    log.e("SYNC ERROR", error: e);
 
   }
 
-  /// SERVER SYNC
-  Future<void> syncSteps() async {
-
-    if (_currentSteps == 0) return;
-
-    if (_currentSteps == _lastSyncedSteps) return;
-
-    try {
-
-      await stepService.syncSteps(_currentSteps);
-
-      _lastSyncedSteps = _currentSteps;
-
-      print("STEPS SYNCED: $_currentSteps");
-
-    } catch (e) {
-
-      print("SYNC ERROR: $e");
-
-    }
-
-  }
-
+}
 }

@@ -1,5 +1,8 @@
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:logger/logger.dart';
+
+final Logger log = Logger();
 
 class StepPermission {
 
@@ -7,7 +10,7 @@ class StepPermission {
 
     try {
 
-      /// ANDROID → Activity Recognition permission
+      //Abdroid permission
       if (Platform.isAndroid) {
 
         PermissionStatus status =
@@ -25,7 +28,7 @@ class StepPermission {
 
       }
 
-      /// IOS → Health plugin өөрөө permission асууна
+      //IOS health uuruu permission asuuna
       if (Platform.isIOS) {
         return true;
       }
@@ -34,7 +37,7 @@ class StepPermission {
 
     } catch (e) {
 
-      print("Permission error: $e");
+      log.i("Permission error: $e");
       return false;
 
     }

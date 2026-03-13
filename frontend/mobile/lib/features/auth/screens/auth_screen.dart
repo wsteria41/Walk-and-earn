@@ -47,7 +47,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         foreground: Paint()
                           ..style = PaintingStyle.stroke
                           ..strokeWidth = 8
-                          ..color = Colors.white.withOpacity(0.1),
+                          ..color = Colors.white.withValues(alpha: 0.1),
                       ),
                     ),
                     Text(
@@ -316,7 +316,7 @@ class _AuthScreenState extends State<AuthScreen> {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: const Color(0xFF7A1CBE).withOpacity(0.25),
+            color: const Color(0xFF7A1CBE).withValues(alpha:0.25),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: const Color(0xFF7A1CBE), width: 1.2),
           ),
@@ -344,6 +344,7 @@ class _AuthScreenState extends State<AuthScreen> {
     email.text,
     password.text,
   );
+  if (!mounted) return;
 
   if (success) {
     Navigator.pushReplacementNamed(context, "/dashboard");
@@ -362,6 +363,8 @@ class _AuthScreenState extends State<AuthScreen> {
       email.text,
       password.text,
     );
+
+    if (!mounted) return;
 
     if (success) {
       ScaffoldMessenger.of(

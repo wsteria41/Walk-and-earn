@@ -9,16 +9,15 @@ import 'core/localization/language_controller.dart';
 import 'features/auth/screens/splash_screen.dart';
 import 'features/auth/screens/auth_screen.dart';
 import 'features/steps/screens/step_dashboard.dart';
+import 'package:mobile/l10n/app_localizations.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
-
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => LanguageController()),
-
       ],
       child: const WearnApp(),
     ),
@@ -30,7 +29,6 @@ class WearnApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
@@ -38,9 +36,15 @@ class WearnApp extends StatelessWidget {
       title: "WEARN",
 
       themeMode: themeProvider.themeMode,
-
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
+
+      /// LANGUAGE
+      locale: context.watch<LanguageController>().locale,
+
+      supportedLocales: AppLocalizations.supportedLocales,
+
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
 
       home: const SplashScreen(),
 

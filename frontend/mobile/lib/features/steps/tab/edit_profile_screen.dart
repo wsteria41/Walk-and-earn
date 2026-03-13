@@ -36,6 +36,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
 
       final profile = await api.getProfile();
+      if (!mounted) return;
 
       setState(() {
 
@@ -75,6 +76,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       final url = await api.uploadProfilePhoto(selectedImage!);
 
+      if (!mounted) return;
       setState(() {
         profilePhoto = url;
       });
@@ -84,7 +86,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
 
     } catch(e){
-
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Upload failed"))
       );
@@ -101,6 +103,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         "phone": phoneController.text,
         "location": locationController.text
       });
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Profile updated"))

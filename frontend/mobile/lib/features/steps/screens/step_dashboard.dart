@@ -6,7 +6,9 @@ import '../../../components/bottom_item.dart';
 import '../screens/history_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/rewards_screen.dart';
-import 'dart:async';
+
+import '../services/step_manager.dart';
+import '../services/step_sync_scheduler.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -16,126 +18,79 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+
   final ApiService apiService = ApiService();
 
-  StreamSubscription<StepCount>? _stepSubscription;
+  late StepManager stepManager;
+  late StepSyncScheduler scheduler;
 
   int selectedIndex = 0;
 
   String name = "User";
   String? avatar;
-  DateTime? lastResetDate;
+
   int steps = 0;
   int points = 0;
   int todayPoints = 0;
   int goal = 10000;
-  int lastSyncedSteps = 0;
-  int baseSteps = 0;
 
   @override
   void initState() {
     super.initState();
 
-    startStepListener();
+    /// STEP MANAGER
+    stepManager = StepManager();
+    stepManager.startTracking();
+
+    /// AUTO SYNC
+    scheduler = StepSyncScheduler(stepManager);
+    scheduler.start();
+
+    /// LOAD DASHBOARD DATA
     loadData();
   }
 
   @override
   void dispose() {
-    _stepSubscription?.cancel();
+
+    scheduler.stop();
+    stepManager.stopTracking();
 
     super.dispose();
   }
 
-  void startStepListener() {
-    _stepSubscription = Pedometer.stepCountStream.listen(
-      (StepCount event) async {
-        int currentSteps = event.steps;
-        DateTime now = DateTime.now();
-
-        if (lastResetDate == null ||
-            lastResetDate!.day != now.day ||
-            lastResetDate!.month != now.month ||
-            lastResetDate!.year != now.year) {
-          baseSteps = currentSteps;
-          lastResetDate = now;
-        }
-
-        print("LIVE STEPS: $currentSteps");
-
-        if (!mounted) return;
-
-        if (baseSteps == 0) {
-          baseSteps = currentSteps;
-        }
-
-        setState(() {
-          steps = currentSteps - baseSteps;
-        });
-
-        if (lastSyncedSteps == 0) {
-          lastSyncedSteps = currentSteps;
-
-          await apiService.post("/walk/sync", {"total_steps": currentSteps});
-
-          print("INITIAL SYNC: $currentSteps");
-
-          return;
-        }
-
-        if (currentSteps - lastSyncedSteps >= 200) {
-          lastSyncedSteps = currentSteps;
-
-          try {
-            await apiService.post("/walk/sync", {"total_steps": currentSteps});
-
-            print("STEPS SYNCED: $currentSteps");
-          } catch (e) {
-            print("SYNC ERROR: $e");
-          }
-        }
-      },
-      onError: (error) {
-        print("STEP STREAM ERROR: $error");
-      },
-    );
-  }
-
-  Future<void> syncCurrentSteps() async {
-    try {
-      if (steps == 0) return;
-
-      await apiService.post("/walk/sync", {"total_steps": steps});
-
-      lastSyncedSteps = steps;
-
-      print("INITIAL SYNC: $steps");
-    } catch (e) {
-      print("INITIAL SYNC ERROR: $e");
-    }
-  }
-
+  /// BACKEND DASHBOARD DATA
   Future<void> loadData() async {
+
     try {
+
       var dashboard = await apiService.getDashboard();
 
       setState(() {
+
         name =
             dashboard["user"]?["name"] ??
             dashboard["user"]?["full_name"] ??
             "User";
+
         points = dashboard["user"]?["totalPoints"] ?? 0;
+
         goal = dashboard["user"]?["dailyGoal"] ?? 10000;
+
         todayPoints = dashboard["todayPoints"] ?? 0;
 
         steps = dashboard["todaySteps"] ?? 0;
+
         avatar = dashboard["user"]?["profile_photo"];
+
       });
+
     } catch (e) {
       debugPrint(e.toString());
     }
   }
 
+  /// PROGRESS
   double get progress {
     if (goal == 0) return 0;
     return (steps / goal).clamp(0, 1);
@@ -147,14 +102,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   String get timeWalked => (steps * 0.01).toStringAsFixed(0);
 
+  /// CHANGE GOAL
   void changeGoal() {
+
     final controller = TextEditingController();
 
     showDialog(
       context: context,
       builder: (_) {
+
         return AlertDialog(
+
           title: const Text("Set Daily Goal"),
+
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
@@ -162,7 +122,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               hintText: "Enter steps (ex: 10000)",
             ),
           ),
+
           actions: [
+
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text("Cancel"),
@@ -170,15 +132,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             ElevatedButton(
               onPressed: () async {
+
                 int newGoal = int.tryParse(controller.text) ?? goal;
 
                 await apiService.updateGoal(newGoal);
 
+                 if (!mounted) return;
                 setState(() {
                   goal = newGoal;
                 });
 
                 Navigator.pop(context);
+
               },
               child: const Text("Save"),
             ),
@@ -188,11 +153,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  /// HOME UI
   Widget buildHome() {
+
     return SingleChildScrollView(
+
       child: Column(
+
         children: [
+
+          /// HEADER
           Container(
+
             height: 150,
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -211,11 +183,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
               children: [
+
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+
                   children: [
-                    const Text("Hi", style: TextStyle(color: Colors.white70)),
+
+                    const Text(
+                      "Hi",
+                      style: TextStyle(color: Colors.white70),
+                    ),
 
                     Text(
                       name,
@@ -230,11 +209,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 Row(
                   children: [
+
+                    /// TOTAL POINTS
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 6,
                       ),
+
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.white24),
@@ -242,11 +224,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       child: Row(
                         children: [
+
                           const Icon(
                             Icons.auto_awesome,
                             color: Colors.white,
                             size: 16,
                           ),
+
                           const SizedBox(width: 6),
 
                           Text(
@@ -259,7 +243,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     const SizedBox(width: 10),
 
+                    /// AVATAR
                     GestureDetector(
+
                       onTap: () {
                         setState(() {
                           selectedIndex = 3;
@@ -272,9 +258,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         backgroundImage: (avatar != null && avatar!.isNotEmpty)
                             ? NetworkImage(avatar!)
                             : null,
+
                         child: (avatar == null || avatar!.isEmpty)
                             ? Text(
-                                name.isNotEmpty ? name[0].toUpperCase() : "U",
+                                name.isNotEmpty
+                                    ? name[0].toUpperCase()
+                                    : "U",
                                 style: const TextStyle(color: Colors.white),
                               )
                             : null,
@@ -288,22 +277,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           const SizedBox(height: 30),
 
+          /// STEP CIRCLE
           Stack(
+
             alignment: Alignment.center,
+
             children: [
+
               SizedBox(
                 width: 220,
                 height: 220,
+
                 child: CircularProgressIndicator(
                   value: progress,
                   strokeWidth: 14,
                   backgroundColor: Colors.white10,
-                  valueColor: const AlwaysStoppedAnimation(Color(0xFF9B4DFF)),
+                  valueColor:
+                      const AlwaysStoppedAnimation(Color(0xFF9B4DFF)),
                 ),
               ),
 
               Column(
                 children: [
+
                   Text(
                     steps.toString(),
                     style: const TextStyle(
@@ -313,7 +309,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
 
-                  const Text("steps", style: TextStyle(color: Colors.white54)),
+                  const Text(
+                    "steps",
+                    style: TextStyle(color: Colors.white54),
+                  ),
 
                   Text(
                     "${(progress * 100).toInt()}% of goal",
@@ -322,6 +321,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   GestureDetector(
                     onTap: changeGoal,
+
                     child: Text(
                       "Goal: $goal",
                       style: const TextStyle(color: Colors.white38),
@@ -334,7 +334,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           const SizedBox(height: 30),
 
+          /// STATS
           Padding(
+
             padding: const EdgeInsets.symmetric(horizontal: 20),
 
             child: GridView.count(
@@ -345,6 +347,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               childAspectRatio: 1.5,
 
               children: [
+
                 StatCard(
                   title: "Distance",
                   value: "$distance km",
@@ -380,6 +383,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     final screens = [
       buildHome(),
       const RewardsScreen(),
@@ -388,12 +392,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ];
 
     return Scaffold(
+
       backgroundColor: Colors.black,
 
       body: SafeArea(child: screens[selectedIndex]),
 
       bottomNavigationBar: SafeArea(
+
         child: Container(
+
           padding: const EdgeInsets.symmetric(vertical: 12),
 
           decoration: const BoxDecoration(
@@ -402,9 +409,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+
             children: [
+
               GestureDetector(
                 onTap: () => setState(() => selectedIndex = 0),
+
                 child: BottomItem(
                   icon: Icons.home,
                   label: "Home",
@@ -414,6 +424,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               GestureDetector(
                 onTap: () => setState(() => selectedIndex = 1),
+
                 child: BottomItem(
                   icon: Icons.card_giftcard,
                   label: "Rewards",
@@ -423,6 +434,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               GestureDetector(
                 onTap: () => setState(() => selectedIndex = 2),
+
                 child: BottomItem(
                   icon: Icons.history,
                   label: "History",
@@ -432,6 +444,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               GestureDetector(
                 onTap: () => setState(() => selectedIndex = 3),
+
                 child: BottomItem(
                   icon: Icons.person_outline,
                   label: "Profile",

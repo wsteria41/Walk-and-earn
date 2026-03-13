@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/api/api_service.dart';
+import 'package:logger/logger.dart';
+
+final Logger log = Logger();
 
 class HealthDetailsScreen extends StatefulWidget {
   const HealthDetailsScreen({super.key});
@@ -32,6 +35,7 @@ Future loadHealth() async {
   try {
 
     final data = await api.getProfile();
+    if (!mounted) return;
 
     setState(() {
 
@@ -66,7 +70,7 @@ Future loadHealth() async {
     });
 
   } catch(e) {
-    print("Health load error: $e");
+    log.i("Health load error: $e");
   }
 
 }
@@ -96,6 +100,7 @@ void calculateAge(){
     double weight = double.parse(weightController.text);
 
     double result = weight / (height * height);
+    if (!mounted) return;
 
     setState(() {
 
@@ -118,33 +123,36 @@ void calculateAge(){
 
   }
 
-  /// SAVE backend
-  Future saveHealth() async {
+Future saveHealth() async {
 
-    try {
+  try {
 
-      await api.updateHealth({
-        "age": int.parse(ageController.text),
-        "height": int.parse(heightController.text),
-        "weight": int.parse(weightController.text),
-        "birth_year": int.parse(birthYearController.text)
-      });
+    await api.updateHealth({
+      "age": int.parse(ageController.text),
+      "height": int.parse(heightController.text),
+      "weight": int.parse(weightController.text),
+      "birth_year": int.parse(birthYearController.text)
+    });
 
-      calculateBMI();
+    if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Health details updated"))
-      );
+    calculateBMI();
 
-    } catch(e){
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Health details updated"))
+    );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Update failed"))
-      );
+  } catch(e){
 
-    }
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Update failed"))
+    );
 
   }
+
+}
 
   /// normal field
   Widget field(String label, TextEditingController controller,{bool readOnly=false}){

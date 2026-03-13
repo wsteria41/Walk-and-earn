@@ -1,0 +1,103 @@
+{
+  "@@locale": "en",
+
+  "settings": "Settings",
+  "@settings": {
+    "description": "Title for the settings screen"
+  },
+
+  "darkMode": "Dark Mode",
+  "@darkMode": {
+    "description": "Toggle to enable or disable dark mode"
+  },
+
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Toggle to enable or disable notifications"
+  },
+
+  "language": "Language",
+  "@language": {
+    "description": "Option to select application language"
+  },
+
+  "login": "Login",
+  "@login": {
+    "description": "Button text for user login"
+  },
+
+  "register": "Register",
+  "@register": {
+    "description": "Button text for creating a new account"
+  },
+
+  "email": "Email",
+  "@email": {
+    "description": "Label for email input field"
+  },
+
+  "password": "Password",
+  "@password": {
+    "description": "Label for password input field"
+  },
+
+  "name": "Name",
+  "@name": {
+    "description": "Label for name input field"
+  },
+
+  "dashboard": "Dashboard",
+  "@dashboard": {
+    "description": "Title of the main dashboard screen"
+  },
+
+  "todaySteps": "Today's Steps",
+  "@todaySteps": {
+    "description": "Number of steps the user has walked today"
+  },
+
+  "totalSteps": "Total Steps",
+  "@totalSteps": {
+    "description": "Total steps accumulated by the user"
+  },
+
+  "distance": "Distance",
+  "@distance": {
+    "description": "Distance walked by the user"
+  },
+
+  "calories": "Calories",
+  "@calories": {
+    "description": "Calories burned from walking"
+  },
+
+  "history": "History",
+  "@history": {
+    "description": "Navigation item for step history screen"
+  },
+
+  "rewards": "Rewards",
+  "@rewards": {
+    "description": "Navigation item for rewards or vouchers screen"
+  },
+
+  "profile": "Profile",
+  "@profile": {
+    "description": "Navigation item for user profile screen"
+  },
+
+  "logout": "Logout",
+  "@logout": {
+    "description": "Button text for logging out of the account"
+  },
+
+  "save": "Save",
+  "@save": {
+    "description": "Button text for saving changes"
+  },
+
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Button text for canceling an action"
+  }
+}

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'app_text.dart';
 
 class LanguageController extends ChangeNotifier {
 
-  void setLanguage(String lang){
+  Locale _locale = const Locale("en");
 
-    AppText.currentLang = lang;
+  Locale get locale => _locale;
 
+  void setLanguage(String code) {
+    _locale = Locale(code);
     notifyListeners();
   }
 

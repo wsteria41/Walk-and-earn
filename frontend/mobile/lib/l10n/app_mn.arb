@@ -1,0 +1,103 @@
+{
+  "@@locale": "mn",
+
+  "settings": "Тохиргоо",
+  "@settings": {
+    "description": "Тохиргооны дэлгэцийн гарчиг"
+  },
+
+  "darkMode": "Харанхуй горим",
+  "@darkMode": {
+    "description": "Харанхуй горимыг асаах эсвэл унтраах сонголт"
+  },
+
+  "notifications": "Мэдэгдэл",
+  "@notifications": {
+    "description": "Мэдэгдлийг асаах эсвэл унтраах тохиргоо"
+  },
+
+  "language": "Хэл",
+  "@language": {
+    "description": "Аппликейшний хэл сонгох тохиргоо"
+  },
+
+  "login": "Нэвтрэх",
+  "@login": {
+    "description": "Хэрэглэгч системд нэвтрэх товч"
+  },
+
+  "register": "Бүртгүүлэх",
+  "@register": {
+    "description": "Шинэ хэрэглэгч бүртгүүлэх товч"
+  },
+
+  "email": "Имэйл",
+  "@email": {
+    "description": "Имэйл оруулах талбарын нэр"
+  },
+
+  "password": "Нууц үг",
+  "@password": {
+    "description": "Нууц үг оруулах талбарын нэр"
+  },
+
+  "name": "Нэр",
+  "@name": {
+    "description": "Хэрэглэгчийн нэр оруулах талбар"
+  },
+
+  "dashboard": "Хянах самбар",
+  "@dashboard": {
+    "description": "Аппликейшний үндсэн самбар"
+  },
+
+  "todaySteps": "Өнөөдрийн алхам",
+  "@todaySteps": {
+    "description": "Өнөөдөр алхсан алхмын тоо"
+  },
+
+  "totalSteps": "Нийт алхам",
+  "@totalSteps": {
+    "description": "Хэрэглэгчийн нийт алхмын тоо"
+  },
+
+  "distance": "Зай",
+  "@distance": {
+    "description": "Алхсан нийт зай"
+  },
+
+  "calories": "Калори",
+  "@calories": {
+    "description": "Алхалтаар шатаасан калори"
+  },
+
+  "history": "Түүх",
+  "@history": {
+    "description": "Алхалтын түүх харах хэсэг"
+  },
+
+  "rewards": "Шагнал",
+  "@rewards": {
+    "description": "Алхалтаар авах боломжтой шагналууд"
+  },
+
+  "profile": "Профайл",
+  "@profile": {
+    "description": "Хэрэглэгчийн профайл мэдээлэл"
+  },
+
+  "logout": "Гарах",
+  "@logout": {
+    "description": "Системээс гарах товч"
+  },
+
+  "save": "Хадгалах",
+  "@save": {
+    "description": "Өөрчлөлтийг хадгалах товч"
+  },
+
+  "cancel": "Цуцлах",
+  "@cancel": {
+    "description": "Үйлдлийг цуцлах товч"
+  }
+}

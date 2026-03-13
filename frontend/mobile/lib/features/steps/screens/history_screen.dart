@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/api/api_service.dart';
+import 'package:logger/logger.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
+  
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -10,6 +12,7 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   final ApiService api = ApiService();
+  final Logger log = Logger();
 
   List stats = [];
   bool loading = true;
@@ -82,8 +85,8 @@ String formatDate(String? isoDate) {
     try {
       final data = await api.getHistory();
 
-    print("HISTORY LENGTH: ${data.length}");
-    print("HISTORY DATA: $data");
+ log.i("HISTORY LENGTH: ${data.length}");
+    log.d("HISTORY DATA: $data");
 
       if (!mounted) return;
 
@@ -92,7 +95,7 @@ String formatDate(String? isoDate) {
         loading = false;
       });
     } catch (e) {
-      print("History error: $e");
+      log.e("History error", error: e);
 
       setState(() {
         loading = false;
@@ -145,7 +148,7 @@ String formatDate(String? isoDate) {
               String date = formatDate(day["date"]);
 
               return activityCard(date, steps, points);
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -275,7 +278,7 @@ String formatDate(String? isoDate) {
             children: [
               summaryStat("STEPS", totalSteps.toString()),
 
-              summaryStat("POINTS", "+${totalPoints}"),
+              summaryStat("POINTS", "+$totalPoints"),
 
               summaryStat("DAYS", "$activeDays/7"),
             ],
