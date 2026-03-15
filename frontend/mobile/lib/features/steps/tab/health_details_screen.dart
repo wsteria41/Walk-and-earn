@@ -12,7 +12,6 @@ class HealthDetailsScreen extends StatefulWidget {
 }
 
 class _HealthDetailsScreenState extends State<HealthDetailsScreen> {
-
   final ageController = TextEditingController();
   final heightController = TextEditingController();
   final weightController = TextEditingController();
@@ -30,71 +29,57 @@ class _HealthDetailsScreenState extends State<HealthDetailsScreen> {
   }
 
   /// BACKEND health data
-Future loadHealth() async {
+  Future loadHealth() async {
+    try {
+      final data = await api.getProfile();
+      if (!mounted) return;
 
-  try {
+      setState(() {
+        heightController.text = (data["height"] ?? "").toString();
+        weightController.text = (data["weight"] ?? "").toString();
+        birthYearController.text = (data["birth_year"] ?? "").toString();
 
-    final data = await api.getProfile();
-    if (!mounted) return;
+        bmi = (data["bmi"] ?? "-").toString();
 
-    setState(() {
+        /// BMI CATEGORY frontend
+        if (data["bmi"] != null) {
+          double val = double.parse(data["bmi"].toString());
 
-      heightController.text = (data["height"] ?? "").toString();
-      weightController.text = (data["weight"] ?? "").toString();
-      birthYearController.text = (data["birth_year"] ?? "").toString();
-
-      bmi = (data["bmi"] ?? "-").toString();
-
-      /// BMI CATEGORY frontend
-      if(data["bmi"] != null){
-
-        double val = double.parse(data["bmi"].toString());
-
-        if(val < 18.5){
-          category = "Underweight";
-        }
-        else if(val < 25){
-          category = "Normal";
-        }
-        else if(val < 30){
-          category = "Overweight";
-        }
-        else{
-          category = "Obese";
+          if (val < 18.5) {
+            category = "Underweight";
+          } else if (val < 25) {
+            category = "Normal";
+          } else if (val < 30) {
+            category = "Overweight";
+          } else {
+            category = "Obese";
+          }
         }
 
-      }
-
-      calculateAge(); // age update
-
-    });
-
-  } catch(e) {
-    log.i("Health load error: $e");
+        calculateAge(); // age update
+      });
+    } catch (e) {
+      log.i("Health load error: $e");
+    }
   }
 
-}
+  void calculateAge() {
+    if (birthYearController.text.isEmpty) return;
 
-void calculateAge(){
+    int year = int.tryParse(birthYearController.text) ?? 0;
 
-  if(birthYearController.text.isEmpty) return;
+    if (year == 0) return;
 
-  int year = int.tryParse(birthYearController.text) ?? 0;
+    int currentYear = DateTime.now().year;
 
-  if(year == 0) return;
+    int age = currentYear - year;
 
-  int currentYear = DateTime.now().year;
-
-  int age = currentYear - year;
-
-  ageController.text = age.toString();
-
-}
+    ageController.text = age.toString();
+  }
 
   /// BMI calculate
   void calculateBMI() {
-
-    if(heightController.text.isEmpty || weightController.text.isEmpty) return;
+    if (heightController.text.isEmpty || weightController.text.isEmpty) return;
 
     double height = double.parse(heightController.text) / 100;
     double weight = double.parse(weightController.text);
@@ -103,74 +88,64 @@ void calculateAge(){
     if (!mounted) return;
 
     setState(() {
-
       bmi = result.toStringAsFixed(1);
 
-      if(result < 18.5){
+      if (result < 18.5) {
         category = "Underweight";
-      }
-      else if(result < 25){
+      } else if (result < 25) {
         category = "Normal";
-      }
-      else if(result < 30){
+      } else if (result < 30) {
         category = "Overweight";
-      }
-      else{
+      } else {
         category = "Obese";
       }
-
     });
-
   }
 
-Future saveHealth() async {
+  Future saveHealth() async {
+    try {
+      await api.updateHealth({
+        "age": int.parse(ageController.text),
+        "height": int.parse(heightController.text),
+        "weight": int.parse(weightController.text),
+        "birth_year": int.parse(birthYearController.text),
+      });
 
-  try {
+      if (!mounted) return;
 
-    await api.updateHealth({
-      "age": int.parse(ageController.text),
-      "height": int.parse(heightController.text),
-      "weight": int.parse(weightController.text),
-      "birth_year": int.parse(birthYearController.text)
-    });
+      calculateBMI();
 
-    if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Health details updated")));
+    } catch (e) {
+      if (!mounted) return;
 
-    calculateBMI();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Health details updated"))
-    );
-
-  } catch(e){
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Update failed"))
-    );
-
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Update failed")));
+    }
   }
-
-}
 
   /// normal field
-  Widget field(String label, TextEditingController controller,{bool readOnly=false}){
-
+  Widget field(
+    String label,
+    TextEditingController controller, {
+    bool readOnly = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         Text(
           label.toUpperCase(),
           style: const TextStyle(
             color: Colors.grey,
             fontSize: 12,
-            fontWeight: FontWeight.bold
+            fontWeight: FontWeight.bold,
           ),
         ),
 
-        const SizedBox(height:6),
+        const SizedBox(height: 3),
 
         TextField(
           controller: controller,
@@ -181,37 +156,37 @@ Future saveHealth() async {
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xff1f2937),
-            contentPadding: const EdgeInsets.symmetric(horizontal:16, vertical:14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
-              borderSide: BorderSide.none
-            )
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
 
-        const SizedBox(height:18)
-
+        const SizedBox(height: 10),
       ],
     );
   }
 
   /// Birth Year calendar
-  Widget birthYearField(){
-
+  Widget birthYearField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         const Text(
           "BIRTH YEAR",
           style: TextStyle(
             color: Colors.grey,
             fontSize: 12,
-            fontWeight: FontWeight.bold
+            fontWeight: FontWeight.bold,
           ),
         ),
 
-        const SizedBox(height:6),
+        const SizedBox(height: 6),
 
         TextField(
           controller: birthYearController,
@@ -219,7 +194,6 @@ Future saveHealth() async {
           style: const TextStyle(color: Colors.white),
 
           onTap: () async {
-
             DateTime? picked = await showDatePicker(
               context: context,
               initialDate: DateTime(2000),
@@ -227,127 +201,113 @@ Future saveHealth() async {
               lastDate: DateTime.now(),
             );
 
-            if(picked != null){
-
+            if (picked != null) {
               setState(() {
                 birthYearController.text = picked.year.toString();
               });
-
             }
-
           },
 
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xff1f2937),
             suffixIcon: const Icon(Icons.calendar_today, color: Colors.grey),
-            contentPadding: const EdgeInsets.symmetric(horizontal:16, vertical:14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
-              borderSide: BorderSide.none
-            )
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
 
-        const SizedBox(height:18)
-
+        const SizedBox(height: 18),
       ],
     );
-
   }
 
   /// BMI card
-  Widget statsCard(){
-
+  Widget statsCard() {
     return Container(
-
       padding: const EdgeInsets.all(20),
 
       decoration: BoxDecoration(
         color: const Color(0xff1f2937),
-        borderRadius: BorderRadius.circular(20)
+        borderRadius: BorderRadius.circular(20),
       ),
 
       child: Column(
-
         crossAxisAlignment: CrossAxisAlignment.start,
 
         children: [
-
           const Text(
             "Calculated Stats",
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
-              fontWeight: FontWeight.bold
+              fontWeight: FontWeight.bold,
             ),
           ),
 
-          const SizedBox(height:20),
+          const SizedBox(height: 20),
 
           Row(
-
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
             children: [
-
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   const Text(
                     "BMI",
                     style: TextStyle(
                       color: Colors.purple,
                       fontSize: 12,
-                      fontWeight: FontWeight.bold
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
 
-                  const SizedBox(height:6),
+                  const SizedBox(height: 6),
 
                   Text(
                     bmi,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 22,
-                      fontWeight: FontWeight.bold
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-
                 ],
               ),
 
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   const Text(
                     "CATEGORY",
                     style: TextStyle(
                       color: Colors.purple,
                       fontSize: 12,
-                      fontWeight: FontWeight.bold
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
 
-                  const SizedBox(height:6),
+                  const SizedBox(height: 6),
 
                   Text(
                     category,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 22,
-                      fontWeight: FontWeight.bold
+                      fontWeight: FontWeight.bold,
                     ),
-                  )
-
+                  ),
                 ],
-              )
-
+              ),
             ],
-          )
-
+          ),
         ],
       ),
     );
@@ -355,35 +315,35 @@ Future saveHealth() async {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
       backgroundColor: Colors.black,
 
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        title: const Text("Health Details")
+        title: const Text(
+          "Health Details",
+          style: TextStyle(color: Colors.white,
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+          ),
+        ),
       ),
 
       body: SingleChildScrollView(
-
         padding: const EdgeInsets.all(20),
 
         child: Column(
-
           crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
             const Text(
               "Update your health information",
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14
-              ),
+              style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
 
-            const SizedBox(height:30),
+            const SizedBox(height: 30),
 
             field("Age (years)", ageController),
             field("Height (cm)", heightController),
@@ -391,34 +351,36 @@ Future saveHealth() async {
 
             birthYearField(),
 
-            const SizedBox(height:10),
+            const SizedBox(height: 10),
 
             statsCard(),
 
-            const SizedBox(height:30),
+            const SizedBox(height: 30),
 
             SizedBox(
               width: double.infinity,
               height: 50,
 
               child: ElevatedButton(
-
                 onPressed: saveHealth,
 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xff9333EA),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)
-                  )
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
 
                 child: const Text(
                   "Save Changes",
-                  style: TextStyle(fontSize:16)
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            )
-
+            ),
           ],
         ),
       ),

@@ -24,7 +24,7 @@ class HelpSupportScreen extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
           Text(
             a,
@@ -45,7 +45,13 @@ class HelpSupportScreen extends StatelessWidget {
       backgroundColor: Colors.black,
 
       appBar: AppBar(
-        title: const Text("Help & Support"),
+        title: const Text("Help & Support",
+        style: TextStyle(
+    color: Colors.white,
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.5,
+  ),),
         backgroundColor: Colors.black,
         elevation: 0,
       ),
@@ -62,7 +68,7 @@ class HelpSupportScreen extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 14),
 
           const Text(
             "Frequently Asked Questions",
@@ -73,7 +79,7 @@ class HelpSupportScreen extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
 
           card(
             "How do I earn points?",
@@ -92,17 +98,7 @@ class HelpSupportScreen extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.purple,
-              minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text("Contact Support"),
-          )
+    
         ],
       ),
     );

@@ -9,8 +9,29 @@ class ThemeProvider extends ChangeNotifier {
 
   bool get isDark => _themeMode == ThemeMode.dark;
 
-  void toggleTheme(bool value) {
+  ThemeProvider() {
+    loadTheme();
+  }
+
+  void toggleTheme(bool value) async {
+
     _themeMode = value ? ThemeMode.dark : ThemeMode.light;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("darkMode", value);
+
     notifyListeners();
+  }
+
+  void loadTheme() async {
+
+    final prefs = await SharedPreferences.getInstance();
+
+    bool? dark = prefs.getBool("darkMode");
+
+    if (dark != null) {
+      _themeMode = dark ? ThemeMode.dark : ThemeMode.light;
+      notifyListeners();
+    }
   }
 }

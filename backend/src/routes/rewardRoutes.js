@@ -19,14 +19,14 @@ router.post(
 );
 
 router.post(
-  "/approve/:transactionId", //merchant нь зөвшөөрөх боломжтой байх
+  "/approve/:transactionId", 
   authMiddleware,
   roleMiddleware("MERCHANT"),
   rewardController.approveRedemption
 );
 
 router.post(
-  "/reject/:transactionId", //merchant нь буцаах боломжтой байх
+  "/reject/:transactionId", 
   authMiddleware,
   roleMiddleware("MERCHANT"),
   rewardController.rejectRedemption
@@ -38,6 +38,16 @@ router.get(
   roleMiddleware("ADMIN"),
   rewardController.getSuspiciousUsers
 );
+router.get(
+  "/list",
+  authMiddleware,
+  rewardController.getRewardList
+);
 
+router.get(
+  "/my-redemptions",
+  authMiddleware,
+  rewardController.getMyRedemptions
+);
 
 module.exports = router;

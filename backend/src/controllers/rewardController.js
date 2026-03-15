@@ -86,6 +86,15 @@ async function getMyRedemptions(req, res) {
   }
 }
 
+async function getRewardList(req, res) {
+  try {
+    const result = await rewardService.getRewardList();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 
 module.exports = {
   redeemReward,
@@ -93,5 +102,6 @@ module.exports = {
   getMyRedemptions,
   createReward,
   approveRedemption,
-  rejectRedemption
+  rejectRedemption,
+  getRewardList
 };

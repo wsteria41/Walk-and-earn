@@ -225,6 +225,17 @@ async function approveRedemption(merchantUserId, transactionId) {
   }
 }
 
+async function getRewardList() {
+  const [rows] = await pool.query(
+    `SELECT id, name, description, required_points, remaining_stock
+     FROM rewards
+     WHERE is_active = 1 AND remaining_stock > 0
+     ORDER BY required_points ASC`
+  );
+  return { rewards: rows };
+}
+
+
 async function rejectRedemption(merchantUserId, transactionId) {
 
   const connection = await pool.getConnection();
@@ -309,5 +320,6 @@ module.exports = {
   getMyRedemptions,
   createReward,
   approveRedemption,
-  rejectRedemption
+  rejectRedemption,
+  getRewardList
 };

@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import '../../../core/api/api_service.dart';
 import 'package:logger/logger.dart';
@@ -10,6 +11,7 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
+
   final ApiService api = ApiService();
   final Logger log = Logger();
 
@@ -44,14 +46,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
     int count = 0;
     for (var day in stats) {
       int steps = int.tryParse(day["steps"].toString()) ?? 0;
-      if (steps > 0) {
-        count++;
-      }
+      if (steps > 0) count++;
     }
     return count;
   }
 
   String formatDate(String? isoDate) {
+
     if (isoDate == null || isoDate.isEmpty) {
       return "Unknown";
     }
@@ -76,11 +77,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> loadHistory() async {
+
     try {
+
       final data = await api.getHistory();
 
       log.i("HISTORY LENGTH: ${data.length}");
-      log.d("HISTORY DATA: $data");
 
       if (!mounted) return;
 
@@ -88,17 +90,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
         stats = data.take(7).toList();
         loading = false;
       });
+
     } catch (e) {
+
       log.e("History error", error: e);
 
       setState(() {
         loading = false;
       });
+
     }
   }
 
   @override
   Widget build(BuildContext context) {
+
     if (loading) {
       return const Scaffold(
         backgroundColor: Colors.black,
@@ -108,150 +114,110 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SafeArea(
-        child: ListView(
-          physics: const BouncingScrollPhysics(),
-          children: [
-            const SizedBox(height: 20),
+      body: Stack(
+        children: [
 
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                "History",
-                style: TextStyle(
-                  fontSize: 28,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+          /// GRADIENT HEADER
+          Container(
+            height: 160,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF59158B),
+                  Color(0xFF8117CE),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
-
-            const SizedBox(height: 20),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: weeklySummaryCard(),
-            ),
-
-            const SizedBox(height: 20),
-
-            ...stats.map((day) {
-              int steps = int.tryParse(day["steps"].toString()) ?? 0;
-              int points = int.tryParse(day["points"].toString()) ?? 0;
-              String date = formatDate(day["date"]);
-
-              return activityCard(date, steps, points);
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget activityCard(String date, int steps, int points) {
-    double km = steps * 0.0008;
-    int calories = (steps * 0.04).toInt();
-
-    double progress = steps / 10000;
-    if (progress > 1) progress = 1;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: const Color(0xFF1E293B),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  date,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: Colors.purple,
-                  ),
-                  child: Text(
-                    "+$points pts",
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                columnStat("STEPS", steps.toString()),
-                columnStat("CALORIES", calories.toString()),
-                columnStat("DISTANCE", "${km.toStringAsFixed(2)} km"),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            LinearProgressIndicator(
-              value: progress,
-              color: Colors.purpleAccent,
-              backgroundColor: Colors.white10,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget columnStat(String title, String value) {
-    return Column(
-      children: [
-        Text(
-          title,
-          style: const TextStyle(color: Colors.white38, fontSize: 12),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
           ),
-        ),
-      ],
+
+          SafeArea(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              physics: const BouncingScrollPhysics(),
+              children: [
+
+                const SizedBox(height: 30),
+
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    "History",
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: weeklySummaryCard(),
+                ),
+
+                const SizedBox(height: 15),
+
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    "Daily Activity",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                ...stats.map((day) {
+
+                  int steps = int.tryParse(day["steps"].toString()) ?? 0;
+                  int points = int.tryParse(day["points"].toString()) ?? 0;
+                  String date = formatDate(day["date"]);
+
+                  return activityCard(date, steps, points);
+
+                }),
+
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget weeklySummaryCard() {
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: const LinearGradient(
-          colors: [Color(0xFF7C3AED), Color(0xFF9333EA)],
+          colors: [
+            Color(0xFF6B1BB5),
+            Color(0xFF8117CE),
+          ],
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+
           const Text(
-            "This Week",
-            style: TextStyle(color: Colors.white70, fontSize: 16),
+            "This week",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
 
           const SizedBox(height: 15),
@@ -269,14 +235,116 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget summaryStat(String title, String value) {
+  Widget activityCard(String date, int steps, int points) {
+
+    double km = steps * 0.0008;
+    int calories = (steps * 0.04).toInt();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+
+                Text(
+                  date,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8117CE),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "+$points pts",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                columnStat("STEPS", steps.toString()),
+                columnStat("CALORIES", calories.toString()),
+                columnStat("DISTANCE", "${km.toStringAsFixed(1)} km"),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget columnStat(String title, String value) {
+
     return Column(
       children: [
+
         Text(
           title,
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
+          style: const TextStyle(
+            color: Colors.white54,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
         ),
+
+        const SizedBox(height: 4),
+
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget summaryStat(String title, String value) {
+
+    return Column(
+      children: [
+
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+          ),
+        ),
+
         const SizedBox(height: 5),
+
         Text(
           value,
           style: const TextStyle(

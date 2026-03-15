@@ -11,7 +11,6 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
@@ -32,34 +31,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future loadProfile() async {
-
     try {
-
       final profile = await api.getProfile();
       if (!mounted) return;
 
       setState(() {
-
         profilePhoto = profile["profile_photo"];
-        emailController.text = profile["email"] ?? ""; 
+        emailController.text = profile["email"] ?? "";
 
         loading = false;
       });
-
-    } catch(e){
-
+    } catch (e) {
       setState(() {
         loading = false;
       });
-
     }
   }
 
   Future pickImage() async {
-
     final picked = await picker.pickImage(source: ImageSource.gallery);
 
-    if(picked == null) return;
+    if (picked == null) return;
 
     setState(() {
       selectedImage = File(picked.path);
@@ -69,11 +61,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future uploadPhoto() async {
-
-    if(selectedImage == null) return;
+    if (selectedImage == null) return;
 
     try {
-
       final url = await api.uploadProfilePhoto(selectedImage!);
 
       if (!mounted) return;
@@ -81,59 +71,54 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         profilePhoto = url;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Photo updated"))
-      );
-
-    } catch(e){
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Photo updated")));
+    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Upload failed"))
-      );
-
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Upload failed")));
     }
   }
 
   Future saveProfile() async {
-
     try {
-
       await api.updateProfile({
         "name": nameController.text,
         "phone": phoneController.text,
-        "location": locationController.text
+        "location": locationController.text,
       });
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Profile updated"))
-      );
-
-    } catch(e){
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Update failed"))
-      );
-
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Profile updated")));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Update failed")));
     }
   }
 
-  Widget buildField(String label, TextEditingController controller, {bool readOnly = false}){
-
+  Widget buildField(
+    String label,
+    TextEditingController controller, {
+    bool readOnly = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         Text(
           label.toUpperCase(),
           style: const TextStyle(
             color: Colors.grey,
             fontSize: 12,
-            fontWeight: FontWeight.bold
+            fontWeight: FontWeight.bold,
           ),
         ),
 
-        const SizedBox(height:6),
+        const SizedBox(height: 6),
 
         TextField(
           controller: controller,
@@ -142,33 +127,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xff1f2937),
-            contentPadding: const EdgeInsets.symmetric(horizontal:16, vertical:14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
-              borderSide: BorderSide.none
-            )
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
 
-        const SizedBox(height:18)
+        const SizedBox(height: 18),
       ],
     );
   }
 
-  Widget buildAvatar(){
-
+  Widget buildAvatar() {
     ImageProvider? image;
 
-    if(selectedImage != null){
+    if (selectedImage != null) {
       image = FileImage(selectedImage!);
-    } else if(profilePhoto != null){
+    } else if (profilePhoto != null) {
       image = NetworkImage(profilePhoto!);
     }
 
     return Stack(
       alignment: Alignment.center,
       children: [
-
         Container(
           width: 110,
           height: 110,
@@ -177,11 +163,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             gradient: const LinearGradient(
               colors: [Color(0xff9333EA), Color(0xff7E22CE)],
               begin: Alignment.topLeft,
-              end: Alignment.bottomRight
+              end: Alignment.bottomRight,
             ),
             image: image != null
                 ? DecorationImage(image: image, fit: BoxFit.cover)
-                : null
+                : null,
           ),
           child: image == null
               ? const Center(
@@ -190,7 +176,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 36,
-                      fontWeight: FontWeight.bold
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 )
@@ -205,47 +191,56 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Container(
               decoration: const BoxDecoration(
                 color: Color(0xff9333EA),
-                shape: BoxShape.circle
+                shape: BoxShape.circle,
               ),
               padding: const EdgeInsets.all(8),
-              child: const Icon(Icons.camera_alt, size:18, color: Colors.white),
+              child: const Icon(
+                Icons.camera_alt,
+                size: 18,
+                color: Colors.white,
+              ),
             ),
           ),
-        )
+        ),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-
-    if(loading){
+    if (loading) {
       return const Scaffold(
         backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator())
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-
       backgroundColor: Colors.black,
 
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        title: const Text("Edit Profile")
+        title: const Text(
+          "Edit Profile",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
+        ),
       ),
 
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-
-            const SizedBox(height:10),
+            const SizedBox(height: 10),
 
             buildAvatar(),
 
-            const SizedBox(height:10),
+            const SizedBox(height: 10),
 
             TextButton(
               onPressed: pickImage,
@@ -255,7 +250,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
 
-            const SizedBox(height:30),
+            const SizedBox(height: 5),
 
             buildField("Full Name", nameController),
 
@@ -265,29 +260,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
             buildField("Location", locationController),
 
-            const SizedBox(height:10),
+            const SizedBox(height: 5),
 
             SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-
                 onPressed: saveProfile,
 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xff9333EA),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)
-                  )
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
 
                 child: const Text(
                   "Save Changes",
-                  style: TextStyle(fontSize:16)
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            )
-
+            ),
           ],
         ),
       ),

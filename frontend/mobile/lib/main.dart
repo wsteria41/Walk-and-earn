@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'providers/theme_provider.dart';
 import 'providers/notification_provider.dart';
 
 import 'core/localization/language_controller.dart';
@@ -11,11 +10,11 @@ import 'features/auth/screens/auth_screen.dart';
 import 'features/steps/screens/step_dashboard.dart';
 import 'package:mobile/l10n/app_localizations.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => LanguageController()),
       ],
@@ -29,18 +28,12 @@ class WearnApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    final themeProvider = context.watch<ThemeProvider>();
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: "WEARN",
-
-      themeMode: themeProvider.themeMode,
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
-
-      /// LANGUAGE
+      theme: ThemeData(
+        scaffoldBackgroundColor: const Color(0xFF0A0015), // ← нэмэх
+      ),
       locale: context.watch<LanguageController>().locale,
 
       supportedLocales: AppLocalizations.supportedLocales,

@@ -17,8 +17,8 @@ class StepManager {
   int _currentSteps = 0;
 
   int get currentSteps => _currentSteps;
+  Function(int)? onStepUpdate;
 
-  /// START TRACKING
   Future<void> startTracking() async {
     bool granted = await StepPermission.request();
 
@@ -37,7 +37,6 @@ class StepManager {
         return;
       }
 
-      /// 10 секунд тутам алхалт шалгана
       _timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
         await _readSteps();
       });
@@ -59,53 +58,47 @@ class StepManager {
       DateTime now = DateTime.now();
       DateTime midnight = DateTime(now.year, now.month, now.day);
 
-      List<HealthDataPoint> data = await health.getHealthDataFromTypes(
-        startTime: midnight,
-        endTime: now,
-        types: [HealthDataType.STEPS],
-      );
+      final steps = await health.getTotalStepsInInterval(midnight, now);
 
-      int totalSteps = 0;
-
-      for (var point in data) {
-        totalSteps += (point.value as num).toInt();
-      }
-
-      _currentSteps = totalSteps;
+      _currentSteps = steps ?? 0;
 
       log.d("TODAY STEPS: $_currentSteps");
+
+      onStepUpdate?.call(_currentSteps);
     } catch (e) {
       log.e("READ STEP ERROR", error: e);
     }
   }
 
-Future<void> syncSteps() async {
+  Future<void> syncSteps() async {
+    if (_currentSteps == 0) {
+      log.w("SYNC SKIPPED: steps is 0");
+      return;
+    }
 
-  if (_currentSteps == 0) return;
+    if (_currentSteps - _lastSyncedSteps < 5) return;
 
-  if (_currentSteps == _lastSyncedSteps) return;
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
 
-  try {
+      await stepService.syncSteps(
+        _currentSteps,
+        position.latitude,
+        position.longitude,
+      );
 
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
+      _lastSyncedSteps = _currentSteps;
 
-    await stepService.syncSteps(
-      _currentSteps,
-      position.latitude,
-      position.longitude,
-    );
-
-    _lastSyncedSteps = _currentSteps;
-
-    log.i("STEPS SYNCED: $_currentSteps");
-
-  } catch (e) {
-
-    log.e("SYNC ERROR", error: e);
-
+      log.i("STEPS SYNCED: $_currentSteps");
+    } catch (e) {
+      log.e("SYNC ERROR", error: e);
+    }
   }
 
-}
+  Future<void> syncTodayFromHealth() async {
+    await _readSteps(); // Health-с авна
+    await syncSteps(); // Backend-рүү илгээнэ
+  }
 }

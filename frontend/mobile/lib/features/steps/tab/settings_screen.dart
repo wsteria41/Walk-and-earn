@@ -1,7 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../providers/theme_provider.dart';
 import '../../../providers/notification_provider.dart';
 import '../../../core/localization/language_controller.dart';
 
@@ -10,65 +10,46 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
     final languageProvider = context.watch<LanguageController>();
     final notificationProvider = context.watch<NotificationProvider>();
 
     return Scaffold(
+      backgroundColor: Colors.black,
+
       appBar: AppBar(
         title: const Text("Settings"),
         centerTitle: true,
+        backgroundColor: Colors.black,
+        elevation: 0,
       ),
 
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
 
-          /// APPEARANCE SECTION
-          const Text(
-            "Appearance",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: SwitchListTile(
-              secondary: const Icon(Icons.dark_mode),
-              title: const Text("Dark Mode"),
-              value: themeProvider.isDark,
-              onChanged: (v) {
-                themeProvider.toggleTheme(v);
-              },
-            ),
-          ),
-
-          const SizedBox(height: 25),
-
-          /// NOTIFICATIONS SECTION
+          /// NOTIFICATIONS
           const Text(
             "Notifications",
             style: TextStyle(
-              fontSize: 16,
+              color: Colors.grey,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
 
           const SizedBox(height: 10),
 
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xff1f2937),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: SwitchListTile(
-              secondary: const Icon(Icons.notifications),
-              title: const Text("Enable Notifications"),
+              secondary: const Icon(Icons.notifications, color: Colors.white),
+              title: const Text(
+                "Enable Notifications",
+                style: TextStyle(color: Colors.white),
+              ),
               value: notificationProvider.enabled,
               onChanged: (v) {
                 notificationProvider.toggle(v);
@@ -78,30 +59,40 @@ class SettingsScreen extends StatelessWidget {
 
           const SizedBox(height: 25),
 
-          /// LANGUAGE SECTION
+          /// LANGUAGE
           const Text(
             "Language",
             style: TextStyle(
-              fontSize: 16,
+              color: Colors.grey,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
 
           const SizedBox(height: 10),
 
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xff1f2937),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: ListTile(
-              leading: const Icon(Icons.language),
-              title: const Text("App Language"),
+              leading: const Icon(Icons.language, color: Colors.white),
+              title: const Text(
+                "App Language",
+                style: TextStyle(color: Colors.white),
+              ),
               subtitle: Text(
                 languageProvider.locale.languageCode == "en"
                     ? "English"
                     : "Монгол",
+                style: const TextStyle(color: Colors.grey),
               ),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              trailing: const Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: Colors.grey,
+              ),
               onTap: () {
                 _showLanguagePicker(context, languageProvider);
               },
@@ -116,6 +107,7 @@ class SettingsScreen extends StatelessWidget {
       BuildContext context, LanguageController languageProvider) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: const Color(0xff1f2937),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(20),
@@ -135,7 +127,7 @@ class SettingsScreen extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[400],
+                    color: Colors.grey[600],
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -147,6 +139,7 @@ class SettingsScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
 
@@ -154,7 +147,10 @@ class SettingsScreen extends StatelessWidget {
 
                 ListTile(
                   leading: const Text("🇺🇸", style: TextStyle(fontSize: 20)),
-                  title: const Text("English"),
+                  title: const Text(
+                    "English",
+                    style: TextStyle(color: Colors.white),
+                  ),
                   onTap: () {
                     languageProvider.setLanguage("en");
                     Navigator.pop(context);
@@ -163,7 +159,10 @@ class SettingsScreen extends StatelessWidget {
 
                 ListTile(
                   leading: const Text("🇲🇳", style: TextStyle(fontSize: 20)),
-                  title: const Text("Монгол"),
+                  title: const Text(
+                    "Монгол",
+                    style: TextStyle(color: Colors.white),
+                  ),
                   onTap: () {
                     languageProvider.setLanguage("mn");
                     Navigator.pop(context);
@@ -177,3 +176,4 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 }
+
