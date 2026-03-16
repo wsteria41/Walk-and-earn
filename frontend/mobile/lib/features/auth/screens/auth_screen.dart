@@ -14,183 +14,181 @@ class _AuthScreenState extends State<AuthScreen> {
   bool isLogin = true;
   bool showPassword = false;
 
-  final AuthService authService = AuthService();
+  final AuthService authService = AuthService(); //auth service holbogdoh object
+
   final name = TextEditingController();
   final email = TextEditingController();
   final password = TextEditingController();
-  final storage = const FlutterSecureStorage();
+  final storage =
+      const FlutterSecureStorage(); // secure storage holbogdoh object
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
+
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const SizedBox(height: 32),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 26),
 
-              /// LOGO
-              ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [Colors.white, Color(0xFFD4B4FF), Color(0xFF9B4DFF)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ).createShader(bounds),
-                child: const Text(
-                  "WEARN",
-                  style: TextStyle(
-                    fontSize: 50,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 6,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+            child: Column(
+              children: [
+                const SizedBox(height: 40),
 
-              const SizedBox(height: 6),
-
-              const Text(
-                "WALK. EARN. REPEAT.",
-                style: TextStyle(
-                  color: Color(0xFFB985FF),
-                  letterSpacing: 3,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              /// TOGGLE
-              Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A1A),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
+                Stack(
+                  alignment: Alignment.center,
                   children: [
-                    _toggleBtn("Login", true),
-                    _toggleBtn("Sign up", false),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              /// FORM
-              AnimatedSize(
-                duration: const Duration(milliseconds: 250),
-                child: Column(
-                  children: [
-                    if (!isLogin) ...[
-                      _input("Full name", name, LucideIcons.user),
-                      const SizedBox(height: 14),
-                    ],
-                    _input("Email address", email, LucideIcons.mail),
-                    const SizedBox(height: 14),
-                    _passwordInput(),
-                    if (isLogin) ...[
-                      const SizedBox(height: 10),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          "Forgot password?",
-                          style: const TextStyle(
-                            color: Color(0xFFB985FF),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              /// MAIN BUTTON
-              GestureDetector(
-                onTap: () => isLogin ? login() : register(),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  decoration: BoxDecoration(
-                   color: const Color(0xFF7B2FFF), 
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Center(
-                    child: Text(
-                      isLogin ? "Login to WEARN" : "Create Account",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                    Text(
+                      "WEARN",
+                      style: TextStyle(
+                        fontSize: 46,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 6,
+                        foreground: Paint()
+                          ..style = PaintingStyle.stroke
+                          ..strokeWidth = 8
+                          ..color = Colors.white.withValues(alpha: 0.1),
                       ),
                     ),
+                    Text(
+                      "WEARN",
+                      style: TextStyle(
+                        fontSize: 46,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 6,
+                        foreground: Paint()
+                          ..shader = const LinearGradient(
+                            colors: [
+                              Colors.white,
+                              Color(0xFFD4B4FF), // light purple
+                              Color(0xFF7A1CBE), // dark purple
+                            ],
+                            stops: [0.0, 0.90, 1.0],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ).createShader(const Rect.fromLTWH(0, 0, 300, 70)),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                const Text(
+                  "WALK. EARN. REPEAT.",
+                  style: TextStyle(
+                    color: Colors.white54,
+                    letterSpacing: 4,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 40),
 
-              Text(
-                "Start your fitness journey today and\nearn rewards with every step you take",
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white38,
-                  fontSize: 12,
-                  height: 1.5,
+                Container(
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                  child: Row(
+                    children: [
+                      toggleButton("Login", true),
+                      toggleButton("Sign Up", false),
+                    ],
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 30),
 
-              /// FEATURES
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _feature(LucideIcons.footprints, "Track Steps"),
-                  _feature(LucideIcons.sparkles, "Earn Points"),
-                  _feature(LucideIcons.award, "Get Rewards"),
-                ],
-              ),
+                if (!isLogin) input("Full Name", name, LucideIcons.user),
 
-              const SizedBox(height: 20),
+                if (!isLogin) const SizedBox(height: 20),
 
-              const Text(
-                "v1.0.1 • WEARN",
-                style: TextStyle(color: Colors.white24, fontSize: 11),
-              ),
+                input("Email Address", email, LucideIcons.mail),
 
-              const SizedBox(height: 20),
-            ],
+                const SizedBox(height: 20),
+
+                passwordInput(),
+
+                const SizedBox(height: 20),
+
+                if (isLogin)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      "Forgot password?",
+                      style: TextStyle(color: Colors.purple.shade300),
+                    ),
+                  ),
+
+                const SizedBox(height: 30),
+
+                mainButton(),
+
+                const SizedBox(height: 20),
+
+                const Text(
+                  "Start your fitness journey today and earn rewards with every step you take",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white54),
+                ),
+
+                const SizedBox(height: 40),
+
+                /// FEATURE ICONS
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    buildFeature(LucideIcons.footprints, "Track Steps"),
+                    buildFeature(LucideIcons.sparkles, "Earn Points"),
+                    buildFeature(LucideIcons.award, "Get Rewards"),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                const Text(
+                  "v1.0.0 • Premium Fitness App",
+                  style: TextStyle(color: Colors.white38),
+                ),
+
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _toggleBtn(String title, bool login) {
+  Widget toggleButton(String title, bool login) {
     bool active = isLogin == login;
+
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => isLogin = login),
+        onTap: () {
+          setState(() {
+            isLogin = login;
+          });
+        },
         child: Container(
-          margin: const EdgeInsets.all(4),
+          margin: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-          color: active ? const Color(0xFF7B2FFF) : Colors.transparent, // ← gradient биш, цул өнгө
-          borderRadius: BorderRadius.circular(40), // ← илүү дугуй
-        ),
+            gradient: active
+                ? const LinearGradient(
+                    colors: [Color(0xFF7A1CBE), Color(0xFF9C27FF)],
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(40),
+          ),
           child: Center(
             child: Text(
               title,
               style: TextStyle(
-                color: active ? Colors.white : Colors.white38,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
+                color: active ? Colors.white : Colors.white54,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
@@ -199,40 +197,29 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _input(String label, TextEditingController c, IconData icon) {
+  Widget input(String label, TextEditingController c, IconData icon) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.white54,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
         ),
+
         const SizedBox(height: 6),
+
         TextField(
           controller: c,
-          style: const TextStyle(color: Colors.white, fontSize: 14),
+          style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: const Color(0xFF9B4DFF), size: 18),
+            prefixIcon: Icon(icon, color: Colors.purpleAccent),
             hintText: "Enter your ${label.toLowerCase()}",
-            hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+            hintStyle: const TextStyle(color: Colors.white30),
             filled: true,
-            fillColor: const Color(0xFF111111),
-            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+            fillColor: Colors.white10,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(18),
               borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF7B2FFF)),
             ),
           ),
         ),
@@ -240,106 +227,177 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _passwordInput() {
+  Widget passwordInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
           "Password",
-          style: TextStyle(
-            color: Colors.white54,
+          style: TextStyle(color: Colors.white70, fontSize: 12),
+        ),
+
+        const SizedBox(height: 6),
+
+        TextField(
+          controller: password,
+          obscureText: !showPassword,
+          style: const TextStyle(color: Colors.white),
+
+          decoration: InputDecoration(
+            prefixIcon: const Icon(
+              LucideIcons.lock,
+              color: Colors.purpleAccent,
+            ),
+
+            suffixIcon: IconButton(
+              icon: Icon(
+                showPassword ? LucideIcons.eyeOff : LucideIcons.eye,
+                color: const Color.fromARGB(255, 128, 11, 148),
+              ),
+              onPressed: () {
+                setState(() {
+                  showPassword = !showPassword;
+                });
+              },
+            ),
+
+            hintText: "Enter your password",
+            hintStyle: const TextStyle(color: Colors.white30),
+
+            filled: true,
+            fillColor: Colors.white10,
+
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        if (!isLogin) ...[
+          const SizedBox(height: 6),
+          const Text(
+            "Хамгийн багадаа 6 тэмдэгт байх ёстой",
+            style: TextStyle(color: Colors.white38, fontSize: 11),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// MAIN BUTTON
+  Widget mainButton() {
+    return GestureDetector(
+      onTap: () {
+        if (isLogin) {
+          login();
+        } else {
+          register();
+        }
+      },
+
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF7A1CBE), Color(0xFF9C27FF)],
+          ),
+          borderRadius: BorderRadius.circular(40),
+        ),
+
+        child: Center(
+          child: Text(
+            isLogin ? "Login to WEARN" : "Create Account",
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// FEATURE ICON
+  Widget buildFeature(IconData icon, String text) {
+    return Column(
+      children: [
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: const Color(0xFF7A1CBE).withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFF7A1CBE), width: 1.2),
+          ),
+          child: Icon(icon, color: const Color(0xFFB56DFF), size: 26),
+        ),
+
+        const SizedBox(height: 8),
+
+        Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white70,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: password,
-          obscureText: !showPassword,
-          style: const TextStyle(color: Colors.white, fontSize: 14),
-          decoration: InputDecoration(
-            prefixIcon: const Icon(LucideIcons.lock, color: Color(0xFF9B4DFF), size: 18),
-            suffixIcon: IconButton(
-              icon: Icon(
-                showPassword ? LucideIcons.eyeOff : LucideIcons.eye,
-                color: const Color(0xFF7B2FFF),
-                size: 18,
-              ),
-              onPressed: () => setState(() => showPassword = !showPassword),
-            ),
-            hintText: "Enter your password",
-            hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
-            filled: true,
-            fillColor: const Color(0xFF111111),
-            contentPadding: const EdgeInsets.symmetric(vertical: 14),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF7B2FFF)),
-            ),
-          ),
-        ),
       ],
     );
   }
 
-  Widget _feature(IconData icon, String text) {
-    return Column(
-      children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1B0036),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFF4A00B4), width: 1),
-          ),
-          child: Icon(icon, color: const Color(0xFFB985FF), size: 22),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white54,
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
+  //login function backend-ruu holbogdoh heseg
   Future<void> login() async {
     bool success = await authService.login(email.text, password.text);
     if (!mounted) return;
+
     if (success) {
       Navigator.pushReplacementNamed(context, "/dashboard");
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Login failed")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Login failed")));
     }
   }
 
   Future<void> register() async {
-    bool success = await authService.register(name.text, email.text, password.text);
+    if (name.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Нэрээ оруулна уу")));
+      return;
+    }
+
+    if (email.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("И-мэйл оруулна уу")));
+      return;
+    }
+
+    if (password.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Нууц үг оруулна уу")));
+      return;
+    }
+
+    bool success = await authService.register(
+      name.text.trim(),
+      email.text.trim(),
+      password.text.trim(),
+    );
+
     if (!mounted) return;
+
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Account created")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Бүртгэл амжилттай")));
       setState(() => isLogin = true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Register failed")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Бүртгэл амжилтгүй")));
     }
   }
 }

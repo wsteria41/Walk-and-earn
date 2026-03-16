@@ -95,6 +95,33 @@ async function getRewardList(req, res) {
   }
 }
 
+async function getMyRewards(req, res) {
+  try {
+    const result = await rewardService.getMyRewards(req.user.id);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function getPendingRedemptions(req, res) {
+  try {
+    const result = await rewardService.getPendingRedemptions(req.user.id);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function getMerchantStats(req, res) {
+  try {
+    const result = await rewardService.getMerchantStats(req.user.id);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 
 module.exports = {
   redeemReward,
@@ -103,5 +130,8 @@ module.exports = {
   createReward,
   approveRedemption,
   rejectRedemption,
-  getRewardList
+  getRewardList,
+  getMyRewards,
+  getMerchantStats,
+  getPendingRedemptions
 };

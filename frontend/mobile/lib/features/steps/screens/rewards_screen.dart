@@ -1,229 +1,442 @@
 import 'package:flutter/material.dart';
+import '../../../core/api/api_service.dart';
+import 'package:intl/intl.dart';
 
-class RewardsScreen extends StatelessWidget {
+class RewardsScreen extends StatefulWidget {
   const RewardsScreen({super.key});
+
+  @override
+  State<RewardsScreen> createState() => _RewardsScreenState();
+}
+
+class _RewardsScreenState extends State<RewardsScreen>
+    with SingleTickerProviderStateMixin {
+  final ApiService api = ApiService();
+
+  late TabController _tabController;
+
+  List rewards = [];
+  List redemptions = [];
+  int userPoints = 0;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    loadData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> loadData() async {
+    try {
+      final r = await api.getRewardList();
+      final h = await api.getMyRedemptions();
+      final profile = await api.getProfile();
+
+      if (!mounted) return;
+      setState(() {
+        rewards = r;
+        redemptions = h;
+        userPoints = int.tryParse(profile["totalPoints"].toString()) ?? 0;
+        loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => loading = false);
+      debugPrint("REWARDS ERROR: $e");
+    }
+  }
+
+  Future<void> redeem(int rewardId, int requiredPoints) async {
+    if (userPoints < requiredPoints) {
+      _showSnack("Оноо хүрэлцэхгүй байна", isError: true);
+      return;
+    }
+
+    try {
+      await api.redeemReward(rewardId);
+      _showSnack("Амжилттай! Хүлээгдэж байна");
+      loadData();
+    } catch (e) {
+      _showSnack(e.toString().replaceAll("Exception: ", ""), isError: true);
+    }
+  }
+
+  void _showSnack(String msg, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: isError ? Colors.redAccent : const Color(0xFF7B2FFF),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-
-              /// HEADER
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF6A11CB),
-                      Color(0xFF8E2DE2),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      "Rewards",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      "Redeem your points for amazing rewards",
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                  ],
+        child: Column(
+          children: [
+            /// HEADER
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF4A00B4), Color(0xFF7B2FFF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              /// BALANCE CARD
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF4A148C),
-                        Color(0xFF7B1FA2),
-                      ],
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            "YOUR BALANCE",
-                            style: TextStyle(color: Colors.white54),
-                          ),
-                          SizedBox(height: 6),
-                          Text(
-                            "1250",
-                            style: TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            "points available",
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          color: Colors.purpleAccent,
-                        ),
-                        child: const Icon(
-                          Icons.emoji_events,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
-              /// TITLE
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Available Rewards",
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Rewards",
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 26,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+
+                  /// BALANCE ROW
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white10,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "YOUR BALANCE",
+                              style: TextStyle(
+                                  color: Colors.white54, fontSize: 11),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "$userPoints",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const Text(
+                              "points available",
+                              style: TextStyle(
+                                  color: Colors.white60, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF7B2FFF),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(Icons.emoji_events,
+                              color: Colors.white, size: 26),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  /// TABS
+                  Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white10,
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      indicator: BoxDecoration(
+                        color: const Color(0xFF7B2FFF),
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      dividerColor: Colors.transparent,
+                      labelColor: Colors.white,
+                      unselectedLabelColor: Colors.white38,
+                      labelStyle: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 13),
+                      tabs: const [
+                        Tab(text: "Available"),
+                        Tab(text: "History"),
+                      ],
+                    ),
+                  ),
+                ],
               ),
+            ),
 
-              const SizedBox(height: 15),
-
-              /// REWARD CARD
-              rewardCard(
-                "assets/voucher.jpg",
-                "\$10 Shopping Voucher",
-                "500",
-              ),
-
-              rewardCard(
-                "assets/coffee.jpg",
-                "Free Coffee",
-                "200",
-              ),
-
-              const SizedBox(height: 40),
-            ],
-          ),
+            /// BODY
+            Expanded(
+              child: loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildAvailable(),
+                        _buildHistory(),
+                      ],
+                    ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget rewardCard(String image, String title, String points) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: const Color(0xFF1E293B),
-        ),
-        child: Row(
-          children: [
+  Widget _buildAvailable() {
+    if (rewards.isEmpty) {
+      return const Center(
+        child: Text("Одоогоор reward байхгүй",
+            style: TextStyle(color: Colors.white38)),
+      );
+    }
 
-            /// IMAGE
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                image,
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      itemCount: rewards.length,
+      itemBuilder: (context, i) {
+        final r = rewards[i];
+        final int required = int.tryParse(r["required_points"].toString()) ?? 0;
+        final int stock = int.tryParse(r["remaining_stock"].toString()) ?? 0;
+        final bool canRedeem = userPoints >= required;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF111111),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF2A2A2A)),
+          ),
+          child: Row(
+            children: [
+              /// ICON
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B0036),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF4A00B4)),
+                ),
+                child: const Icon(Icons.card_giftcard,
+                    color: Color(0xFFB985FF), size: 26),
               ),
-            ),
 
-            const SizedBox(width: 14),
+              const SizedBox(width: 14),
 
-            /// TEXT
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  Text(
-                    "$points points",
-                    style: const TextStyle(
-                      color: Colors.purpleAccent,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF9333EA),
-                          Color(0xFFC084FC),
-                        ],
+              /// INFO
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      r["name"] ?? "",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    child: const Text(
-                      "Redeem Now",
-                      style: TextStyle(color: Colors.white),
+                    const SizedBox(height: 4),
+                    Text(
+                      "$required points",
+                      style: const TextStyle(
+                          color: Color(0xFFB985FF), fontSize: 13),
                     ),
-                  )
-                ],
+                    Text(
+                      "$stock left",
+                      style: const TextStyle(
+                          color: Colors.white38, fontSize: 11),
+                    ),
+                  ],
+                ),
               ),
-            )
-          ],
+
+              /// BUTTON
+              GestureDetector(
+                onTap: canRedeem
+                    ? () => _confirmRedeem(r["id"], required, r["name"])
+                    : null,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: canRedeem
+                        ? const Color(0xFF7B2FFF)
+                        : const Color(0xFF2A2A2A),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "Redeem",
+                    style: TextStyle(
+                      color: canRedeem ? Colors.white : Colors.white24,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _confirmRedeem(int id, int points, String name) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text("Confirm Redeem",
+            style: TextStyle(color: Colors.white)),
+        content: Text(
+          "$name — $points оноо зарцуулна",
+          style: const TextStyle(color: Colors.white60),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel",
+                style: TextStyle(color: Colors.white38)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7B2FFF),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              redeem(id, points);
+            },
+            child: const Text("Confirm"),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildHistory() {
+    if (redemptions.isEmpty) {
+      return const Center(
+        child: Text("Түүх байхгүй байна",
+            style: TextStyle(color: Colors.white38)),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      itemCount: redemptions.length,
+      itemBuilder: (context, i) {
+        final r = redemptions[i];
+        final String status = r["status"] ?? "PENDING";
+        final String date = _formatDate(r["redeemed_at"]);
+
+        Color statusColor;
+        if (status == "APPROVED") {
+          statusColor = Colors.greenAccent;
+        } else if (status == "REJECTED") {
+          statusColor = Colors.redAccent;
+        } else {
+          statusColor = const Color(0xFFB985FF);
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF111111),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF2A2A2A)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B0036),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.receipt_long,
+                    color: Color(0xFFB985FF), size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      r["name"] ?? "",
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      "${r["points_used"]} points • $date",
+                      style: const TextStyle(
+                          color: Colors.white38, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: statusColor.withOpacity(0.4)),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                      color: statusColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatDate(String? iso) {
+    if (iso == null) return "";
+    final d = DateTime.tryParse(iso);
+    if (d == null) return "";
+    return DateFormat("MMM dd, yyyy").format(d.toLocal());
   }
 }

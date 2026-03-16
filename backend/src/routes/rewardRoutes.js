@@ -50,4 +50,8 @@ router.get(
   rewardController.getMyRedemptions
 );
 
+router.get("/my-rewards", authMiddleware, roleMiddleware("MERCHANT"), rewardController.getMyRewards);
+router.get("/pending-redemptions", authMiddleware, roleMiddleware("MERCHANT"), rewardController.getPendingRedemptions);
+router.get("/merchant-stats", authMiddleware, roleMiddleware("MERCHANT"), rewardController.getMerchantStats);
+
 module.exports = router;

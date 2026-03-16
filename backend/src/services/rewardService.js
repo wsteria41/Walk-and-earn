@@ -314,6 +314,49 @@ async function rejectRedemption(merchantUserId, transactionId) {
   }
 }
 
+async function getMyRewards(merchantUserId) {
+  const [rows] = await pool.query(`
+    SELECT r.id, r.name, r.description, r.required_points,
+           r.stock_limit, r.remaining_stock, r.is_active, r.created_at
+    FROM rewards r
+    JOIN merchants m ON r.merchant_id = m.id
+    WHERE m.user_id = ?
+    ORDER BY r.created_at DESC
+  `, [merchantUserId]);
+  return { rewards: rows };
+}
+
+async function getPendingRedemptions(merchantUserId) {
+  const [rows] = await pool.query(`
+    SELECT t.id, t.points_used, t.redeemed_at, t.status,
+           u.name AS user_name, u.email AS user_email,
+           r.name AS reward_name
+    FROM redeem_transactions t
+    JOIN rewards r ON t.reward_id = r.id
+    JOIN merchants m ON r.merchant_id = m.id
+    JOIN users u ON t.user_id = u.id
+    WHERE m.user_id = ? AND t.status = 'PENDING'
+    ORDER BY t.redeemed_at DESC
+  `, [merchantUserId]);
+  return { redemptions: rows };
+}
+
+async function getMerchantStats(merchantUserId) {
+  const [rows] = await pool.query(`
+    SELECT 
+      COUNT(t.id) AS total_redeems,
+      SUM(CASE WHEN t.status = 'PENDING' THEN 1 ELSE 0 END) AS pending,
+      SUM(CASE WHEN t.status = 'APPROVED' THEN 1 ELSE 0 END) AS approved,
+      SUM(CASE WHEN t.status = 'REJECTED' THEN 1 ELSE 0 END) AS rejected,
+      COUNT(DISTINCT r.id) AS total_rewards
+    FROM rewards r
+    JOIN merchants m ON r.merchant_id = m.id
+    LEFT JOIN redeem_transactions t ON t.reward_id = r.id
+    WHERE m.user_id = ?
+  `, [merchantUserId]);
+  return rows[0];
+}
+
 module.exports = {
   redeemReward,
   getSuspiciousUsers,
@@ -321,5 +364,8 @@ module.exports = {
   createReward,
   approveRedemption,
   rejectRedemption,
-  getRewardList
+  getRewardList,
+  getMyRewards,
+  getPendingRedemptions,
+  getMerchantStats,
 };

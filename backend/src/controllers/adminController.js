@@ -9,6 +9,26 @@ async function getAdminDashboard(req, res) {
   }
 }
 
+async function getAllUsers(req, res) {
+  try {
+    const result = await adminService.getAllUsers();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function getAllTransactions(req, res) {
+  try {
+    const result = await adminService.getAllTransactions();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
-  getAdminDashboard
+  getAdminDashboard,
+  getAllUsers,
+  getAllTransactions
 };

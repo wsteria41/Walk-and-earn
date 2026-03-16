@@ -53,6 +53,32 @@ async function getAdminDashboard() {//admin dashboard data aggregation
   };
 }
 
+async function getAllUsers() {
+  const [rows] = await pool.query(`
+    SELECT id, name, email, role, total_points, daily_goal, created_at
+    FROM users
+    WHERE role = 'USER'
+    ORDER BY created_at DESC
+  `);
+  return { users: rows };
+}
+
+async function getAllTransactions() {
+  const [rows] = await pool.query(`
+    SELECT t.id, t.status, t.points_used, t.redeemed_at,
+           u.name AS user_name, u.email AS user_email,
+           r.name AS reward_name
+    FROM redeem_transactions t
+    JOIN users u ON t.user_id = u.id
+    JOIN rewards r ON t.reward_id = r.id
+    ORDER BY t.redeemed_at DESC
+  `);
+  return { transactions: rows };
+}
+
 module.exports = {
-  getAdminDashboard
+  getAdminDashboard,
+  getAllUsers,
+  getAllTransactions,
 };
+

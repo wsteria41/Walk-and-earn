@@ -29,12 +29,18 @@ class StepManager {
 
     try {
       final types = [HealthDataType.STEPS];
+      final permissions = [HealthDataAccess.READ];
 
-      bool requested = await health.requestAuthorization(types);
+      bool requested = await health.requestAuthorization(
+        types,
+        permissions: permissions,
+      );
 
       if (!requested) {
         log.w("Health permission denied");
         return;
+      } else {
+        log.i('Authorized: $requested');
       }
 
       _timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
@@ -98,7 +104,7 @@ class StepManager {
   }
 
   Future<void> syncTodayFromHealth() async {
-    await _readSteps(); // Health-с авна
-    await syncSteps(); // Backend-рүү илгээнэ
+    await _readSteps(); // Healthees avna
+    await syncSteps(); // Backendruu ilgeene
   }
 }

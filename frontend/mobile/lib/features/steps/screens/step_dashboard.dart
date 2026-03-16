@@ -66,12 +66,15 @@ void initState() {
         HealthDataType.STEPS,
       ]);
       debugPrint("Authorization result: $authorized");
+
       final now = DateTime.now();
       final midnight = DateTime(now.year, now.month, now.day);
       final todaySteps = await health.getTotalStepsInInterval(midnight, now);
       debugPrint("HEALTH TODAY STEPS: $todaySteps");
+
       if (!mounted) return;
       setState(() => steps = todaySteps ?? 0);
+
       if ((todaySteps ?? 0) > 0) stepManager.syncTodayFromHealth();
     } catch (e, stack) {
       debugPrint("HEALTH LOAD ERROR: $e");
@@ -94,6 +97,7 @@ void initState() {
         points = dashboard["user"]?["totalPoints"] ?? 0;
         goal = dashboard["user"]?["dailyGoal"] ?? 10000;
         todayPoints = dashboard["todayPoints"] ?? 0;
+
         avatar = dashboard["user"]?["profile_photo"];
       });
     } catch (e) {
@@ -166,7 +170,7 @@ void initState() {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// HEADER
+  
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
@@ -199,7 +203,7 @@ void initState() {
                 ),
                 Row(
                   children: [
-                    /// POINTS
+    
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -231,7 +235,7 @@ void initState() {
                     ),
                     const SizedBox(width: 10),
 
-                    /// AVATAR
+                  
                     GestureDetector(
                       onTap: () => setState(() => selectedIndex = 3),
                       child: CircleAvatar(
@@ -258,14 +262,13 @@ void initState() {
             ),
           ),
 
-          /// BODY
+   
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: [
                 const SizedBox(height: 32),
 
-                /// STEP CIRCLE
                 Center(
                   child: SizedBox(
                     width: 220,
@@ -348,7 +351,6 @@ void initState() {
 
                 const SizedBox(height: 32),
 
-                /// STATS GRID
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
@@ -370,7 +372,6 @@ void initState() {
 
                 const SizedBox(height: 16),
 
-                /// KEEP WALKING BANNER
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(18),

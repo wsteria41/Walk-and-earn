@@ -206,4 +206,36 @@ class ApiService {
 
     throw Exception("Failed to load history");
   }
+
+Future<List<Map<String, dynamic>>> getRewardList() async {
+  final response = await get("/rewards/list");
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return List<Map<String, dynamic>>.from(data["rewards"] ?? []);
+  }
+
+  throw Exception("Failed to load rewards");
+}
+
+Future<List<Map<String, dynamic>>> getMyRedemptions() async {
+  final response = await get("/rewards/my-redemptions");
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return List<Map<String, dynamic>>.from(data["redemptions"] ?? []);
+  }
+
+  throw Exception("Failed to load redemptions");
+}
+
+Future<Map<String, dynamic>> redeemReward(int rewardId) async {
+  final response = await post("/rewards/redeem/$rewardId", {});
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  }
+
+  throw Exception(jsonDecode(response.body)["error"] ?? "Redeem failed");
+}
 }

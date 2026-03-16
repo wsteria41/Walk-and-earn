@@ -11,5 +11,7 @@ router.get(
   roleMiddleware("ADMIN"),
   adminController.getAdminDashboard
 );
+router.get("/users", authMiddleware, roleMiddleware("ADMIN"), adminController.getAllUsers);
+router.get("/transactions", authMiddleware, roleMiddleware("ADMIN"), adminController.getAllTransactions);
 
 module.exports = router;

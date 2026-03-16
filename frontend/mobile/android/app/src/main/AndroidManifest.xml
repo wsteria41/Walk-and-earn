@@ -24,9 +24,12 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"/>
 
-            <!-- Health Connect intent filter ← нэмэх -->
             <intent-filter>
                 <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.health.connect.action.HEALTH_HOME_SETTINGS"/>
             </intent-filter>
 
             <intent-filter>
@@ -42,7 +45,6 @@
 
     </application>
 
-   
     <queries>
         <package android:name="com.google.android.apps.healthdata"/>
         <intent>

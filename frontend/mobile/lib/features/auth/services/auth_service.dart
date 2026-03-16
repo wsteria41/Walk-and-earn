@@ -68,6 +68,7 @@ class AuthService {
       );
 
       log.i("REGISTER STATUS: ${response.statusCode}");
+    
 
       return response.statusCode == 200 || response.statusCode == 201;
 
