@@ -286,7 +286,6 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  /// MAIN BUTTON
   Widget mainButton() {
     return GestureDetector(
       onTap: () {
@@ -318,7 +317,6 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  /// FEATURE ICON
   Widget buildFeature(IconData icon, String text) {
     return Column(
       children: [
@@ -347,13 +345,11 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  //login function backend-ruu holbogdoh heseg
 Future<void> login() async {
   bool success = await authService.login(email.text, password.text);
   if (!mounted) return;
 
   if (success) {
-    // ✅ Permission хүсэхгүй — dashboard дотор хийнэ
     Navigator.pushReplacementNamed(context, "/dashboard");
   } else {
     ScaffoldMessenger.of(context).showSnackBar(
