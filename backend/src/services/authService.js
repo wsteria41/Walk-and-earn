@@ -100,7 +100,7 @@ async function registerMerchant(name, email, password) {
     if (existing.length > 0) throw new Error("И-мэйл бүртгэлтэй байна");
 
     const [result] = await connection.query(
-      `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'MERCHANT')`,
+      `INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'MERCHANT')`,
       [name, email, hashed]
     );
 
