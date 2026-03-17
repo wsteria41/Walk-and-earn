@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:health/health.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,7 +14,6 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-
   final storage = const FlutterSecureStorage();
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -21,9 +22,9 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
+    );
 
     _fadeController = AnimationController(
       vsync: this,
@@ -45,25 +46,27 @@ class _SplashScreenState extends State<SplashScreen>
     _fadeController.dispose();
     super.dispose();
   }
+Future<void> checkLogin() async {
+  String? token = await storage.read(key: "token");
+  await Future.delayed(const Duration(seconds: 2));
+  if (!mounted) return;
 
-  Future<void> checkLogin() async {
-    String? token = await storage.read(key: "token");
-    await Future.delayed(const Duration(seconds: 3));
-    if (!mounted) return;
-    if (token != null) {
-      Navigator.pushReplacementNamed(context, "/dashboard");
-    } else {
-      Navigator.pushReplacementNamed(context, "/auth");
-    }
+  if (token != null) {
+    // ✅ Permission хүсэхгүй — dashboard дотор хийнэ
+    Navigator.pushReplacementNamed(context, "/dashboard");
+  } else {
+    Navigator.pushReplacementNamed(context, "/auth");
   }
+}
+  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0A0015),
       body: Container(
-          width: double.infinity,  
-          height: double.infinity,
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -80,7 +83,6 @@ class _SplashScreenState extends State<SplashScreen>
         ),
         child: Stack(
           children: [
-
             Positioned(
               top: -80,
               left: -60,
@@ -120,65 +122,62 @@ class _SplashScreenState extends State<SplashScreen>
             FadeTransition(
               opacity: _fadeAnimation,
               child: SizedBox(
-             width: double.infinity,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
+                width: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Spacer(flex: 3),
 
-                  const Spacer(flex: 3),
-
-
-                  ShaderMask(
-                    shaderCallback: (bounds) {
-                      return const LinearGradient(
-                        colors: [
-                          Colors.white,
-                          Color(0xFFD4B4FF),
-                          Color(0xFF9B4DFF),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ).createShader(bounds);
-                    },
-                    child: const Text(
-                      "WEARN",
-                      style: TextStyle(
-                        fontSize: 64,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 8,
-                        color: Colors.white,
+                    ShaderMask(
+                      shaderCallback: (bounds) {
+                        return const LinearGradient(
+                          colors: [
+                            Colors.white,
+                            Color(0xFFD4B4FF),
+                            Color(0xFF9B4DFF),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ).createShader(bounds);
+                      },
+                      child: const Text(
+                        "WEARN",
+                        style: TextStyle(
+                          fontSize: 64,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 8,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-    
-                  const Text(
-                    "WALK. EARN. REPEAT.",
-                    style: TextStyle(
-                      color: Color(0xFFB985FF),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 3,
+                    const Text(
+                      "WALK. EARN. REPEAT.",
+                      style: TextStyle(
+                        color: Color(0xFFB985FF),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 3,
+                      ),
                     ),
-                  ),
 
-                  const Spacer(flex: 4),
+                    const Spacer(flex: 4),
 
-                  const Text(
-                    "v1.0.0",
-                    style: TextStyle(
-                      color: Color(0xFF6B4A8A),
-                      fontSize: 12,
-                      letterSpacing: 1,
+                    const Text(
+                      "v1.0.0",
+                      style: TextStyle(
+                        color: Color(0xFF6B4A8A),
+                        fontSize: 12,
+                        letterSpacing: 1,
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 40),
-                ],
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
-            ),
             ),
           ],
         ),

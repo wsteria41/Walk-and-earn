@@ -86,7 +86,43 @@ async function login(email, password) {
   };
 }
 
+async function registerMerchant(name, email, password) {
+  const bcrypt = require("bcrypt");
+  const hashed = await bcrypt.hash(password, 10);
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [existing] = await connection.query(
+      `SELECT id FROM users WHERE email = ?`, [email]
+    );
+    if (existing.length > 0) throw new Error("И-мэйл бүртгэлтэй байна");
+
+    const [result] = await connection.query(
+      `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'MERCHANT')`,
+      [name, email, hashed]
+    );
+
+    // ← business_name болон contact_email нэмэх
+    await connection.query(
+      `INSERT INTO merchants (user_id, business_name, contact_email) VALUES (?, ?, ?)`,
+      [result.insertId, name, email]
+    );
+
+    await connection.commit();
+    return { message: "Merchant бүртгэл амжилттай" };
+
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
+}
+
 module.exports = {
   register,
-  login
+  login,
+  registerMerchant
 };

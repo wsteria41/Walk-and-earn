@@ -31,56 +31,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int todayPoints = 0;
   int goal = 10000;
 
-@override
-void initState() {
-  super.initState();
-  
-  debugPrint("=== DASHBOARD initState START ===");
-  
-  stepManager = StepManager();
-  stepManager.onStepUpdate = (value) {
-    if (!mounted) return;
-    setState(() => steps = value);
-  };
+  @override
+  void initState() {
+    super.initState();
 
-  debugPrint("=== CALLING _loadTodayStepsFromHealth ===");
-  _loadTodayStepsFromHealth();
-  
-  debugPrint("=== CALLING startTracking ===");
-  stepManager.startTracking();
-  
-  scheduler = StepSyncScheduler(stepManager);
+    stepManager = StepManager();
+    stepManager.onStepUpdate = (value) {
+      if (!mounted) return;
+      setState(() => steps = value);
+    };
+
+    scheduler = StepSyncScheduler(stepManager);
+    loadData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initSteps();
+    });
+  }
+
+Future<void> _initSteps() async {
+  await Future.delayed(const Duration(seconds: 1));
+  if (!mounted) return;
+
+  // ✅ Permission бүгд StepPermission.request() дотор — давхардал байхгүй
+  await stepManager.startTracking();
+
+  await _loadTodayStepsFromHealth();
   scheduler.start();
-  
-  debugPrint("=== CALLING loadData ===");
-  loadData();
-  
-  debugPrint("=== DASHBOARD initState END ===");
 }
 
-  Future<void> _loadTodayStepsFromHealth() async {
-    debugPrint("_loadTodayStepsFromHealth CALLED");
-    try {
-      final health = Health();
-      final authorized = await health.requestAuthorization([
-        HealthDataType.STEPS,
-      ]);
-      debugPrint("Authorization result: $authorized");
+Future<void> _loadTodayStepsFromHealth() async {
+  try {
+    final health = Health();
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day);
 
-      final now = DateTime.now();
-      final midnight = DateTime(now.year, now.month, now.day);
-      final todaySteps = await health.getTotalStepsInInterval(midnight, now);
-      debugPrint("HEALTH TODAY STEPS: $todaySteps");
+    // ✅ hasPermissions ХАСАВ — шууд унш
+    int retries = 3;
+    int? todaySteps;
 
-      if (!mounted) return;
-      setState(() => steps = todaySteps ?? 0);
+    while (retries > 0) {
+      try {
+        todaySteps = await health.getTotalStepsInInterval(midnight, now);
+        debugPrint("TRY: $retries → STEPS: $todaySteps");
+        if ((todaySteps ?? 0) > 0) break;
+      } catch (e) {
+        debugPrint("RETRY $retries FAILED: $e");
+      }
 
-      if ((todaySteps ?? 0) > 0) stepManager.syncTodayFromHealth();
-    } catch (e, stack) {
-      debugPrint("HEALTH LOAD ERROR: $e");
-      debugPrint("STACK: $stack");
+      retries--;
+      await Future.delayed(const Duration(seconds: 2));
     }
+
+    if (!mounted) return;
+
+    setState(() => steps = todaySteps ?? 0);
+
+    if ((todaySteps ?? 0) > 0) {
+      await stepManager.syncTodayFromHealth();
+    }
+  } catch (e) {
+    debugPrint("HEALTH LOAD ERROR: $e");
   }
+}
 
   @override
   void dispose() {
@@ -97,7 +110,6 @@ void initState() {
         points = dashboard["user"]?["totalPoints"] ?? 0;
         goal = dashboard["user"]?["dailyGoal"] ?? 10000;
         todayPoints = dashboard["todayPoints"] ?? 0;
-
         avatar = dashboard["user"]?["profile_photo"];
       });
     } catch (e) {
@@ -108,7 +120,12 @@ void initState() {
   double get progress => goal <= 0 ? 0 : (steps / goal).clamp(0.0, 1.0);
   String get distance => (steps * 0.0008).toStringAsFixed(1);
   int get calories => (steps * 0.04).toInt();
-  String get timeWalked => "${(steps * 0.01 / 60).toStringAsFixed(1)} hrs";
+  // ✅ Зөв тооцоолол
+  String get timeWalked {
+    double minutes = steps * 0.01;
+    if (minutes < 60) return "${minutes.toStringAsFixed(0)} min";
+    return "${(minutes / 60).toStringAsFixed(1)} hrs";
+  }
 
   void changeGoal() {
     final controller = TextEditingController();
@@ -140,10 +157,7 @@ void initState() {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              "Cancel",
-              style: TextStyle(color: Colors.white54),
-            ),
+            child: const Text("Cancel", style: TextStyle(color: Colors.white54)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -170,7 +184,7 @@ void initState() {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-  
+          // Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
@@ -203,7 +217,6 @@ void initState() {
                 ),
                 Row(
                   children: [
-    
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -223,7 +236,7 @@ void initState() {
                           ),
                           const SizedBox(width: 5),
                           Text(
-                            "$points",
+                            "$points pts",
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -234,16 +247,15 @@ void initState() {
                       ),
                     ),
                     const SizedBox(width: 10),
-
-                  
                     GestureDetector(
                       onTap: () => setState(() => selectedIndex = 3),
                       child: CircleAvatar(
                         radius: 20,
                         backgroundColor: Colors.white24,
-                        backgroundImage: (avatar != null && avatar!.isNotEmpty)
-                            ? NetworkImage(avatar!)
-                            : null,
+                        backgroundImage:
+                            (avatar != null && avatar!.isNotEmpty)
+                                ? NetworkImage(avatar!)
+                                : null,
                         child: (avatar == null || avatar!.isEmpty)
                             ? Text(
                                 name.isNotEmpty ? name[0].toUpperCase() : "U",
@@ -262,13 +274,13 @@ void initState() {
             ),
           ),
 
-   
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: [
                 const SizedBox(height: 32),
 
+                // Step circle
                 Center(
                   child: SizedBox(
                     width: 220,
@@ -289,7 +301,6 @@ void initState() {
                             strokeCap: StrokeCap.round,
                           ),
                         ),
-
                         Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -351,6 +362,7 @@ void initState() {
 
                 const SizedBox(height: 32),
 
+                // ✅ Давхардал засагдсан — "Points" нэмсэн
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
@@ -360,13 +372,11 @@ void initState() {
                   childAspectRatio: 1.7,
                   children: [
                     _statTile("Distance", "$distance km", Icons.route),
-                    _statTile(
-                      "Calories",
-                      "$calories kcal",
-                      Icons.local_fire_department,
-                    ),
+                    _statTile("Calories", "$calories kcal",
+                        Icons.local_fire_department),
                     _statTile("Time", timeWalked, Icons.timer),
-                    _statTile("Time", timeWalked, Icons.timer),
+                    _statTile("Today Points", "+$todayPoints pts",
+                        Icons.auto_awesome),
                   ],
                 ),
 
@@ -446,10 +456,8 @@ void initState() {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: const TextStyle(color: Colors.white54, fontSize: 12),
-          ),
+          Text(title,
+              style: const TextStyle(color: Colors.white54, fontSize: 12)),
           Row(
             children: [
               Icon(icon, color: const Color(0xFF9B4DFF), size: 18),

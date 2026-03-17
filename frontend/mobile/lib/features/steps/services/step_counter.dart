@@ -3,63 +3,43 @@ import 'package:logger/logger.dart';
 import 'step_permission.dart';
 
 class StepCounter {
-
   int _steps = 0;
-
   int get currentSteps => _steps;
 
   final Health health = Health();
-
   final Logger log = Logger();
 
   Future<void> startListening(Function(int) onStep) async {
-
     bool granted = await StepPermission.request();
-
     if (!granted) {
-      log.w("Permission denied");
+      log.w("Activity permission denied");
       return;
     }
 
     try {
+final types = [HealthDataType.STEPS];
+final permissions = [HealthDataAccess.READ];
 
-      final types = [
-        HealthDataType.STEPS,
-      ];
+// ⚠️ Шууд permission хүс
+bool requested = await health.requestAuthorization(
+  types,
+  permissions: permissions,
+);
 
-      bool requested = await health.requestAuthorization(types);
+if (!requested) {
+  log.w("Health permission denied");
+  return;
+}
 
-      if (!requested) {
-        log.w("Health permission denied");
-        return;
-      }
+      final now = DateTime.now();
+      final midnight = DateTime(now.year, now.month, now.day);
+      int? steps = await health.getTotalStepsInInterval(midnight, now);
 
-      DateTime now = DateTime.now();
-      DateTime midnight = DateTime(now.year, now.month, now.day);
-
-      List<HealthDataPoint> healthData =
-          await health.getHealthDataFromTypes(
-        startTime: midnight,
-        endTime: now,
-        types: types,
-      );
-
-      int totalSteps = 0;
-
-      for (var point in healthData) {
-        totalSteps += (point.value as num).toInt();
-      }
-
-      _steps = totalSteps;
-
+      _steps = steps ?? 0;
       log.i("TODAY STEPS: $_steps");
-
       onStep(_steps);
-
     } catch (e) {
-
       log.e("STEP ERROR", error: e);
-
     }
   }
 }

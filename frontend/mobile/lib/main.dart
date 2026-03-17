@@ -32,7 +32,7 @@ class WearnApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: "WEARN",
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFF0A0015), // ← нэмэх
+        scaffoldBackgroundColor: const Color(0xFF0A0015), 
       ),
       locale: context.watch<LanguageController>().locale,
 

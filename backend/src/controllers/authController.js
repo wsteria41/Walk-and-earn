@@ -29,4 +29,20 @@ async function login(req, res) {
   }
 }
 
-module.exports = { register, login };
+async function registerMerchant(req, res) {
+  try {
+    const { name, email, password, secret } = req.body;
+
+    // Нууц код шалгах
+    if (secret !== process.env.MERCHANT_SECRET) {
+      return res.status(403).json({ error: "Нууц код буруу байна" });
+    }
+
+    const result = await authService.registerMerchant(name, email, password);
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+module.exports = { register, login, registerMerchant};

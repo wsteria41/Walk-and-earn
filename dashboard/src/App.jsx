@@ -3,6 +3,7 @@ import LoginPage from "./pages/LoginPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import MerchantDashboard from "./pages/merchant/MerchantDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MerchantRegister from "./pages/MerchantRegister";
 
 export default function App() {
   return (
@@ -26,6 +27,10 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route 
+        path="/merchant/register" 
+        element={
+        <MerchantRegister />} />
       </Routes>
     </BrowserRouter>
   );
