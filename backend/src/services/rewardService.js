@@ -96,54 +96,34 @@ async function getSuspiciousUsers() {
   return { suspiciousRecords: rows };
 }
 
-async function createReward(userId, name, description, requiredPoints, stockLimit) {
-
+async function createReward(userId, name, description, requiredPoints, stockLimit, discountPercent, rewardType, imageUrl) {
   const connection = await pool.getConnection();
-
   try {
-
     await connection.beginTransaction();
 
     const [merchantRows] = await connection.query(
-      `SELECT id FROM merchants WHERE user_id = ?`,
-      [userId]
+      `SELECT id FROM merchants WHERE user_id = ?`, [userId]
     );
-
-    if (merchantRows.length === 0) {
-      throw new Error("Merchant profile not found");
-    }
+    if (merchantRows.length === 0) throw new Error("Merchant profile not found");
 
     const merchantId = merchantRows[0].id;
 
     await connection.query(
       `INSERT INTO rewards
-       (merchant_id, name, description, required_points, stock_limit, remaining_stock, is_active, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, 1, NOW())`,
-      [
-        merchantId,
-        name,
-        description,
-        requiredPoints,
-        stockLimit,
-        stockLimit
-      ]
+       (merchant_id, name, description, required_points, stock_limit,
+        remaining_stock, is_active, discount_percent, reward_type, image_url, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, NOW())`,
+      [merchantId, name, description, requiredPoints, stockLimit,
+       stockLimit, discountPercent || null, rewardType || 'VOUCHER', imageUrl || null]
     );
 
     await connection.commit();
-
-    return {
-      message: "Reward created successfully"
-    };
-
+    return { message: "Reward created successfully" };
   } catch (err) {
-
     await connection.rollback();
     throw err;
-
   } finally {
-
     connection.release();
-
   }
 }
 
@@ -226,12 +206,15 @@ async function approveRedemption(merchantUserId, transactionId) {
 }
 
 async function getRewardList() {
-  const [rows] = await pool.query(
-    `SELECT id, name, description, required_points, remaining_stock
-     FROM rewards
-     WHERE is_active = 1 AND remaining_stock > 0
-     ORDER BY required_points ASC`
-  );
+  const [rows] = await pool.query(`
+    SELECT r.id, r.name, r.description, r.required_points,
+           r.remaining_stock, r.discount_percent, r.reward_type, r.image_url,
+           m.business_name
+    FROM rewards r
+    JOIN merchants m ON r.merchant_id = m.id
+    WHERE r.is_active = 1 AND r.remaining_stock > 0
+    ORDER BY r.required_points ASC
+  `);
   return { rewards: rows };
 }
 
@@ -317,7 +300,8 @@ async function rejectRedemption(merchantUserId, transactionId) {
 async function getMyRewards(merchantUserId) {
   const [rows] = await pool.query(`
     SELECT r.id, r.name, r.description, r.required_points,
-           r.stock_limit, r.remaining_stock, r.is_active, r.created_at
+           r.stock_limit, r.remaining_stock, r.is_active,
+           r.discount_percent, r.reward_type, r.image_url, r.created_at
     FROM rewards r
     JOIN merchants m ON r.merchant_id = m.id
     WHERE m.user_id = ?

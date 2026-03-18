@@ -27,22 +27,50 @@ async function getSuspiciousUsers(req, res) {
 async function createReward(req, res) {
   try {
     const userId = req.user.id;
-    const { name, description, required_points, stock_limit } = req.body;
+    const { name, description, required_points, stock_limit,
+            discount_percent, reward_type, image_url } = req.body;
 
     const result = await rewardService.createReward(
-      userId,
-      name,
-      description,
-      required_points,
-      stock_limit
+      userId, name, description, required_points, stock_limit,
+      discount_percent, reward_type, image_url
     );
-
     res.status(201).json(result);
-
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 }
+
+async function uploadRewardPhoto(req, res) {
+  try {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: "Файл байхгүй" });
+
+    const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+    const s3 = new S3Client({
+      endpoint: process.env.DO_SPACE_ENDPOINT,       
+      region: "sgp1",
+      credentials: {
+        accessKeyId: process.env.DO_SPACE_KEY,        
+        secretAccessKey: process.env.DO_SPACE_SECRET, 
+      },
+    });
+
+    const key = `rewards/${Date.now()}-${file.originalname}`;
+    await s3.send(new PutObjectCommand({
+      Bucket: process.env.DO_SPACE_BUCKET,            
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+      ACL: "public-read",
+    }));
+
+    const url = `https://${process.env.DO_SPACE_BUCKET}.sgp1.digitaloceanspaces.com/${key}`;
+    res.json({ url });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 
 async function approveRedemption(req, res) {
 try{
@@ -133,5 +161,6 @@ module.exports = {
   getRewardList,
   getMyRewards,
   getMerchantStats,
-  getPendingRedemptions
+  getPendingRedemptions,
+  uploadRewardPhoto
 };
