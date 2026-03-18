@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import api from "../../../api/axios";
 
-export default function MyRewards() {
+export default function MyRewards({ dark, cardBg, bdr, txt, muted, typeConfig }) {
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -13,6 +13,14 @@ export default function MyRewards() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  const typeLabel = typeConfig
+    ? Object.fromEntries(Object.entries(typeConfig).map(([k, v]) => [k, v.label]))
+    : { DISCOUNT: "Хөнгөлөлт", VOUCHER: "Ваучер", FREEBIE: "Үнэгүй" };
+
+  const typeColor = typeConfig
+    ? Object.fromEntries(Object.entries(typeConfig).map(([k, v]) => [k, v.color]))
+    : { DISCOUNT: "#1D9E75", VOUCHER: "#a78bfa", FREEBIE: "#f59e0b" };
 
   useEffect(() => { loadRewards(); }, []);
 
@@ -28,37 +36,25 @@ export default function MyRewards() {
     setSaving(true);
     try {
       let imageUrl = null;
-
       if (imageFile) {
         const formData = new FormData();
         formData.append("image", imageFile);
         const uploadRes = await axios.post(
           "https://wearn.me/rewards/upload-image",
           formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
+          { headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${localStorage.getItem("token")}` } }
         );
         imageUrl = uploadRes.data.url;
       }
-
       await api.post("/rewards/create", {
-        name: form.name,
-        description: form.description,
+        name: form.name, description: form.description,
         required_points: Number(form.required_points),
         stock_limit: Number(form.stock_limit),
         discount_percent: form.discount_percent ? Number(form.discount_percent) : null,
-        reward_type: form.reward_type,
-        image_url: imageUrl,
+        reward_type: form.reward_type, image_url: imageUrl,
       });
-
       setForm({ name: "", description: "", required_points: "", stock_limit: "", discount_percent: "", reward_type: "DISCOUNT" });
-      setImageFile(null);
-      setImagePreview(null);
-      setShowForm(false);
+      setImageFile(null); setImagePreview(null); setShowForm(false);
       loadRewards();
     } catch (err) {
       alert(err.response?.data?.error || "Алдаа гарлаа");
@@ -67,19 +63,26 @@ export default function MyRewards() {
     }
   }
 
-  const typeLabel = { DISCOUNT: "Хөнгөлөлт", VOUCHER: "Ваучер", FREEBIE: "Үнэгүй" };
-  const typeColor = { DISCOUNT: "#1D9E75", VOUCHER: "#a78bfa", FREEBIE: "#f59e0b" };
+  const inputStyle = {
+    display: "block", width: "100%", marginTop: 6,
+    padding: "10px 14px",
+    background: dark ? "#1a1a2e" : "#f4f4f8",
+    border: `1px solid ${bdr}`, borderRadius: 8,
+    color: txt, fontSize: 14, boxSizing: "border-box",
+  };
 
-  if (loading) return <p style={{ color: "#666" }}>Уншиж байна...</p>;
+  if (loading) return <p style={{ color: muted }}>Уншиж байна...</p>;
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>Урамшуулалууд</h2>
+      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: 24 }}>
+        
         <button onClick={() => setShowForm(!showForm)} style={{
-          padding: "10px 20px", background: showForm ? "#1a1a1a" : "#1D9E75",
-          border: showForm ? "1px solid #2a2a2a" : "none",
-          borderRadius: 8, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer",
+          padding: "10px 20px",
+          background: showForm ? "transparent" : "#1D9E75",
+          border: showForm ? `1px solid ${bdr}` : "none",
+          borderRadius: 8, color: showForm ? muted : "#fff",
+          fontSize: 14, fontWeight: 600, cursor: "pointer",
         }}>
           {showForm ? "Болих" : "+ Шинэ урамшуулал"}
         </button>
@@ -88,66 +91,51 @@ export default function MyRewards() {
       {/* FORM */}
       {showForm && (
         <form onSubmit={handleCreate} style={{
-          background: "#111", border: "1px solid #1e1e1e",
+          background: cardBg, border: `1px solid ${bdr}`,
           borderRadius: 12, padding: 24, marginBottom: 24,
         }}>
-          <h3 style={{ marginBottom: 16, color: "#fff", fontSize: 16 }}>Шинэ урамшуулал үүсгэх</h3>
+          <h3 style={{ marginBottom: 16, color: txt, fontSize: 16 }}>Шинэ урамшуулал үүсгэх</h3>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-
             {[
-              { key: "name", label: "Нэр", type: "text", placeholder: "10% хөнгөлөлт" },
-              { key: "description", label: "Тайлбар", type: "text", placeholder: "Бүх бараанд 10% хөнгөлөлт" },
-              { key: "required_points", label: "Шаардлагатай оноо", type: "number", placeholder: "50" },
-              { key: "stock_limit", label: "Нөөц тоо", type: "number", placeholder: "100" },
-              { key: "discount_percent", label: "Хөнгөлөлтийн хувь (%)", type: "number", placeholder: "10" },
+              { key: "name",             label: "Нэр",                     type: "text",   placeholder: "10% хөнгөлөлт" },
+              { key: "description",      label: "Тайлбар",                 type: "text",   placeholder: "Бүх бараанд 10% хөнгөлөлт" },
+              { key: "required_points",  label: "Шаардлагатай оноо",       type: "number", placeholder: "50" },
+              { key: "stock_limit",      label: "Нөөц тоо",                type: "number", placeholder: "100" },
+              { key: "discount_percent", label: "Хөнгөлөлтийн хувь (%)",  type: "number", placeholder: "10" },
             ].map(f => (
               <div key={f.key}>
-                <label style={{ color: "#666", fontSize: 12 }}>{f.label}</label>
+                <label style={{ color: muted, fontSize: 12 }}>{f.label}</label>
                 <input
-                  type={f.type} value={form[f.key]}
-                  placeholder={f.placeholder}
+                  type={f.type} value={form[f.key]} placeholder={f.placeholder}
                   onChange={e => setForm({ ...form, [f.key]: e.target.value })}
-                  style={{
-                    display: "block", width: "100%", marginTop: 6,
-                    padding: "10px 14px", background: "#1a1a1a",
-                    border: "1px solid #2a2a2a", borderRadius: 8,
-                    color: "#fff", fontSize: 14, boxSizing: "border-box",
-                  }}
+                  style={inputStyle}
                 />
               </div>
             ))}
 
-            {/* REWARD TYPE */}
             <div>
-              <label style={{ color: "#666", fontSize: 12 }}>Төрөл</label>
+              <label style={{ color: muted, fontSize: 12 }}>Төрөл</label>
               <select
                 value={form.reward_type}
                 onChange={e => setForm({ ...form, reward_type: e.target.value })}
-                style={{
-                  display: "block", width: "100%", marginTop: 6,
-                  padding: "10px 14px", background: "#1a1a1a",
-                  border: "1px solid #2a2a2a", borderRadius: 8,
-                  color: "#fff", fontSize: 14, boxSizing: "border-box",
-                }}
+                style={inputStyle}
               >
                 <option value="DISCOUNT">Хөнгөлөлт (%)</option>
-                <option value="VOUCHER">Ваучер</option>
                 <option value="FREEBIE">Үнэгүй бараа</option>
               </select>
             </div>
 
-            {/* IMAGE UPLOAD */}
             <div style={{ gridColumn: "1 / -1" }}>
-              <label style={{ color: "#666", fontSize: 12 }}>Зураг (заавал биш)</label>
+              <label style={{ color: muted, fontSize: 12 }}>Зураг (заавал биш)</label>
               <div style={{
-                marginTop: 6, border: "1px dashed #2a2a2a", borderRadius: 8,
+                marginTop: 6, border: `1px dashed ${bdr}`, borderRadius: 8,
                 padding: 16, textAlign: "center", cursor: "pointer",
-                position: "relative", background: "#1a1a1a",
+                position: "relative", background: dark ? "#1a1a2e" : "#f4f4f8",
               }}>
                 {imagePreview ? (
                   <img src={imagePreview} style={{ height: 80, borderRadius: 8, objectFit: "cover" }} />
                 ) : (
-                  <div style={{ color: "#444", fontSize: 13 }}>Зураг сонгохын тулд дарна уу</div>
+                  <div style={{ color: muted, fontSize: 13 }}>Зураг сонгохын тулд дарна уу</div>
                 )}
                 <input
                   type="file" accept="image/*"
@@ -165,6 +153,7 @@ export default function MyRewards() {
             marginTop: 16, padding: "10px 24px", background: "#1D9E75",
             border: "none", borderRadius: 8, color: "#fff",
             fontSize: 14, fontWeight: 600, cursor: "pointer",
+            opacity: saving ? 0.7 : 1,
           }}>
             {saving ? "Хадгалж байна..." : "Хадгалах"}
           </button>
@@ -174,10 +163,10 @@ export default function MyRewards() {
       {/* LIST */}
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {rewards.length === 0 ? (
-          <p style={{ color: "#555", textAlign: "center", padding: 40 }}>Урамшуулал байхгүй</p>
+          <p style={{ color: muted, textAlign: "center", padding: 40 }}>Урамшуулал байхгүй</p>
         ) : rewards.map(r => (
           <div key={r.id} style={{
-            background: "#111", border: "1px solid #1e1e1e",
+            background: cardBg, border: `1px solid ${bdr}`,
             borderRadius: 12, padding: 16,
             display: "flex", alignItems: "center", gap: 16,
           }}>
@@ -199,20 +188,21 @@ export default function MyRewards() {
             {/* INFO */}
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{r.name}</span>
+                <span style={{ color: txt, fontWeight: 700, fontSize: 15 }}>{r.name}</span>
                 <span style={{
                   fontSize: 10, padding: "2px 8px", borderRadius: 10, fontWeight: 600,
-                  color: typeColor[r.reward_type], background: typeColor[r.reward_type] + "22",
+                  color: typeColor[r.reward_type],
+                  background: typeColor[r.reward_type] + "22",
                   border: `1px solid ${typeColor[r.reward_type]}44`,
                 }}>{typeLabel[r.reward_type]}</span>
               </div>
-              <div style={{ color: "#666", fontSize: 13, marginBottom: 6 }}>{r.description}</div>
+              <div style={{ color: muted, fontSize: 13, marginBottom: 6 }}>{r.description}</div>
               <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
                 <span style={{ color: "#a78bfa" }}>{r.required_points} оноо</span>
                 {r.discount_percent && (
                   <span style={{ color: "#1D9E75", fontWeight: 700 }}>{r.discount_percent}% хөнгөлөлт</span>
                 )}
-                <span style={{ color: "#555" }}>Үлдсэн: {r.remaining_stock}</span>
+                <span style={{ color: muted }}>Үлдсэн: {r.remaining_stock}</span>
               </div>
             </div>
 

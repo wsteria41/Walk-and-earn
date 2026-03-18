@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../../api/axios";
 
-export default function Suspicious() {
+export default function Suspicious({ T }) {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -12,31 +12,34 @@ export default function Suspicious() {
     });
   }, []);
 
-  if (loading) return <p style={{ color: "#666" }}>Уншиж байна...</p>;
+  if (loading) return <p style={{ color: T.textMuted }}>Уншиж байна...</p>;
 
   return (
     <div>
-      <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 24 }}>Сэжигтэй хэрэглэгчид</h2>
       {list.length === 0 ? (
-        <p style={{ color: "#666" }}>Сэжигтэй бичлэг байхгүй</p>
+        <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: 40, textAlign: "center" }}>
+          <p style={{ color: T.textMuted }}>Сэжигтэй бичлэг байхгүй</p>
+        </div>
       ) : (
-        <div style={{ background: "#111", border: "1px solid #ff444422", borderRadius: 12, overflow: "hidden" }}>
+        <div style={{ background: T.bgCard, border: "1px solid #ef444433", borderRadius: 12, overflow: "hidden" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ background: "#1a1a1a" }}>
+              <tr style={{ background: T.bgInput }}>
                 {["User ID", "Нийт алхалт", "Нэмэгдсэн", "Шалтгаан", "Огноо"].map(h => (
-                  <th key={h} style={{ padding: "12px 16px", textAlign: "left", color: "#666", fontSize: 12 }}>{h}</th>
+                  <th key={h} style={{ padding: "12px 16px", textAlign: "left", color: T.textSub, fontSize: 11, fontWeight: 600, letterSpacing: ".5px", textTransform: "uppercase" }}>
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {list.map((r, i) => (
-                <tr key={i} style={{ borderTop: "1px solid #1e1e1e" }}>
-                  <td style={{ padding: "12px 16px", color: "#fff" }}>{r.user_id}</td>
-                  <td style={{ padding: "12px 16px", color: "#888" }}>{r.total_steps}</td>
-                  <td style={{ padding: "12px 16px", color: "#ff6b6b", fontWeight: 700 }}>{r.delta_steps}</td>
+                <tr key={i} style={{ borderTop: `1px solid ${T.border}`, background: i % 2 === 0 ? T.bgCard : T.bgInput }}>
+                  <td style={{ padding: "12px 16px", color: T.text, fontWeight: 600 }}>{r.user_id}</td>
+                  <td style={{ padding: "12px 16px", color: T.textSub }}>{r.total_steps}</td>
+                  <td style={{ padding: "12px 16px", color: "#f87171", fontWeight: 700 }}>{r.delta_steps}</td>
                   <td style={{ padding: "12px 16px", color: "#f59e0b", fontSize: 13 }}>{r.suspicion_reason}</td>
-                  <td style={{ padding: "12px 16px", color: "#555", fontSize: 12 }}>{r.recorded_at?.split("T")[0]}</td>
+                  <td style={{ padding: "12px 16px", color: T.textMuted, fontSize: 12 }}>{r.recorded_at?.split("T")[0]}</td>
                 </tr>
               ))}
             </tbody>

@@ -362,9 +362,8 @@ class _RewardsScreenState extends State<RewardsScreen>
         "icon": Icons.card_giftcard,
         "color": const Color(0xFFf59e0b),
       },
-      "VOUCHER": {"icon": Icons.receipt_long, "color": const Color(0xFFB985FF)},
     };
-    final c = config[type] ?? config["VOUCHER"]!;
+    final c = config[type] ?? config["DISCOUNT"]!;
     return Container(
       width: 64,
       height: 64,

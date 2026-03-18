@@ -4,7 +4,6 @@ import {
   ResponsiveContainer, CartesianGrid, Cell,
 } from "recharts";
 import api from "../../../api/axios";
-import { useTheme } from "../../../context/ThemeContext";
 
 const STAT_ICONS = {
   users:      <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="6" r="4" stroke="#a78bfa" strokeWidth="1.5"/><path d="M3 18c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round"/></svg>,
@@ -22,7 +21,6 @@ function CustomTooltip({ active, payload, label, T }) {
       background: T.chartTooltipBg,
       border: `1px solid ${T.chartTooltipBorder}`,
       borderRadius: 10, padding: "10px 14px",
-      boxShadow: "0 8px 32px #00000022",
     }}>
       <p style={{ color: "#7c3aed", fontSize: 11, fontWeight: 700, marginBottom: 4, letterSpacing: 1 }}>
         {label}
@@ -35,10 +33,9 @@ function CustomTooltip({ active, payload, label, T }) {
   );
 }
 
-export default function Overview({ onSuspCount }) {
+export default function Overview({ onSuspCount, T }) {
   const [data, setData] = useState(null);
   const [hoveredBar, setHoveredBar] = useState(null);
-  const { theme: T } = useTheme();
 
   useEffect(() => {
     api.get("/admin/dashboard").then((res) => {
@@ -49,25 +46,21 @@ export default function Overview({ onSuspCount }) {
 
   if (!data) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, gap: 12 }}>
-      <div style={{
-        width: 8, height: 8, borderRadius: "50%", background: "#7c3aed",
-        animation: "blink 1s ease-in-out infinite",
-      }} />
+      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#7c3aed" }} />
       <p style={{ color: T.textSub, fontSize: 13, letterSpacing: 1 }}>Уншиж байна...</p>
-      <style>{`@keyframes blink{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}`}</style>
     </div>
   );
 
   const stats = [
-    { label: "Нийт хэрэглэгч", value: data.totalUsers,                  key: "users",      color: "#a78bfa", bg: "#7c3aed12", border: "#7c3aed30" },
-    { label: "Нийт алхалт",    value: data.totalSteps.toLocaleString(),   key: "steps",      color: "#34d399", bg: "#34d39912", border: "#34d39930" },
-    { label: "Нийт оноо",      value: data.totalPoints.toLocaleString(),  key: "points",     color: "#fbbf24", bg: "#fbbf2412", border: "#fbbf2430" },
-    { label: "Нийт redeem",    value: data.totalRedeems,                  key: "redeem",     color: "#60a5fa", bg: "#60a5fa12", border: "#60a5fa30" },
+    { label: "Нийт хэрэглэгч", value: data.totalUsers,                 key: "users",      color: "#a78bfa", bg: "#7c3aed12", border: "#7c3aed30" },
+    { label: "Нийт алхалт",    value: data.totalSteps.toLocaleString(), key: "steps",      color: "#34d399", bg: "#34d39912", border: "#34d39930" },
+    { label: "Нийт оноо",      value: data.totalPoints.toLocaleString(),key: "points",     color: "#fbbf24", bg: "#fbbf2412", border: "#fbbf2430" },
+    { label: "Нийт redeem",    value: data.totalRedeems,                key: "redeem",     color: "#60a5fa", bg: "#60a5fa12", border: "#60a5fa30" },
     {
       label: "Хүлээгдэж буй", value: data.pendingRedeems, key: "pending",
-      color:  data.pendingRedeems > 0 ? "#fb923c" : T.textSub,
-      bg:     data.pendingRedeems > 0 ? "#fb923c12" : T.warnOffBg,
-      border: data.pendingRedeems > 0 ? "#fb923c30" : T.warnOffBorder,
+      color:  data.pendingRedeems  > 0 ? "#fb923c" : T.textSub,
+      bg:     data.pendingRedeems  > 0 ? "#fb923c12" : T.warnOffBg,
+      border: data.pendingRedeems  > 0 ? "#fb923c30" : T.warnOffBorder,
     },
     {
       label: "Сэжигтэй", value: data.suspiciousRecords, key: "suspicious",
@@ -87,14 +80,9 @@ export default function Overview({ onSuspCount }) {
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: T.text, margin: 0, letterSpacing: -0.5 }}>
-            Тойм
-          </h2>
-          <p style={{ fontSize: 12, color: T.textSub, margin: "4px 0 0", letterSpacing: 0.5 }}>
-            Системийн ерөнхий статистик
-          </p>
-        </div>
+        <p style={{ fontSize: 12, color: T.textSub, margin: 0, letterSpacing: 0.5 }}>
+          Системийн ерөнхий статистик
+        </p>
         <div style={{
           background: "#7c3aed18", border: "1px solid #7c3aed33",
           borderRadius: 10, padding: "6px 14px",
@@ -111,33 +99,21 @@ export default function Overview({ onSuspCount }) {
             background: s.bg, border: `1px solid ${s.border}`,
             borderRadius: 14, padding: "18px 20px",
             position: "relative", overflow: "hidden",
-            transition: "transform .15s, box-shadow .15s",
-            cursor: "default",
+            transition: "transform .15s, box-shadow .15s", cursor: "default",
           }}
             onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 8px 32px ${s.color}18`; }}
             onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
           >
-            <div style={{
-              position: "absolute", top: -20, right: -20,
-              width: 70, height: 70, borderRadius: "50%",
-              background: s.color, opacity: 0.06, filter: "blur(20px)", pointerEvents: "none",
-            }} />
+            <div style={{ position: "absolute", top: -20, right: -20, width: 70, height: 70, borderRadius: "50%", background: s.color, opacity: 0.06, filter: "blur(20px)", pointerEvents: "none" }} />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <p style={{ color: T.textSub, fontSize: 11, fontWeight: 600, letterSpacing: 0.5, margin: 0 }}>
                 {s.label.toUpperCase()}
               </p>
-              <div style={{
-                width: 32, height: 32, borderRadius: 8,
-                background: `${s.color}18`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: `${s.color}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {STAT_ICONS[s.key]}
               </div>
             </div>
-            <p style={{
-              fontSize: 30, fontWeight: 900, color: s.color,
-              margin: 0, lineHeight: 1, fontVariantNumeric: "tabular-nums",
-            }}>
+            <p style={{ fontSize: 30, fontWeight: 900, color: s.color, margin: 0, lineHeight: 1 }}>
               {s.value}
             </p>
           </div>
@@ -152,22 +128,12 @@ export default function Overview({ onSuspCount }) {
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
-            <p style={{ color: T.text, fontSize: 14, fontWeight: 700, margin: 0 }}>
-              Өдөр тутмын идэвхтэй хэрэглэгч
-            </p>
-            <p style={{ color: T.textSub, fontSize: 11, margin: "3px 0 0" }}>
-              Сүүлийн 7 хоног
-            </p>
+            <p style={{ color: T.text, fontSize: 14, fontWeight: 700, margin: 0 }}>Өдөр тутмын идэвхтэй хэрэглэгч</p>
+            <p style={{ color: T.textSub, fontSize: 11, margin: "3px 0 0" }}>Сүүлийн 7 хоног</p>
           </div>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 6,
-            background: "#7c3aed18", border: "1px solid #7c3aed22",
-            borderRadius: 8, padding: "4px 10px",
-          }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#7c3aed18", border: "1px solid #7c3aed22", borderRadius: 8, padding: "4px 10px" }}>
             <div style={{ width: 8, height: 8, borderRadius: 2, background: "#7c3aed" }} />
-            <span style={{ fontSize: 10, color: "#7c6ab0", fontWeight: 600, letterSpacing: 0.5 }}>
-              ИДЭВХТЭЙ
-            </span>
+            <span style={{ fontSize: 10, color: "#7c6ab0", fontWeight: 600, letterSpacing: 0.5 }}>ИДЭВХТЭЙ</span>
           </div>
         </div>
 
@@ -204,7 +170,6 @@ export default function Overview({ onSuspCount }) {
           </BarChart>
         </ResponsiveContainer>
       </div>
-
     </div>
   );
 }
