@@ -27,26 +27,46 @@ export default function MerchantRegister() {
 
   return (
     <div style={{
-      minHeight: "100vh", background: "#0a0a0a",
-      display: "flex", alignItems: "center", justifyContent: "center",
+      minHeight: "100vh",
+      background: "#f6f8fb",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
     }}>
       <div style={{
-        background: "#111", border: "1px solid #1e1e1e",
-        borderRadius: 16, padding: "40px 36px", width: 400,
+        background: "#fff",
+        border: "1px solid #e5e7eb",
+        borderRadius: 20,
+        padding: "40px 36px",
+        width: 400,
+        boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
       }}>
         <h1 style={{
-          color: "#fff", fontSize: 24, fontWeight: 900,
-          letterSpacing: 3, textAlign: "center", marginBottom: 6,
+          color: "#111",
+          fontSize: 26,
+          fontWeight: 900,
+          letterSpacing: 2,
+          textAlign: "center",
+          marginBottom: 6,
         }}>WEARN</h1>
+
         <p style={{
-          color: "#1D9E75", textAlign: "center",
-          fontSize: 11, letterSpacing: 2, marginBottom: 28,
-        }}>MERCHANT БҮРТГЭЛ</p>
+          color: "#1D9E75",
+          textAlign: "center",
+          fontSize: 12,
+          letterSpacing: 2,
+          marginBottom: 28,
+          fontWeight: 600
+        }}>
+          MERCHANT БҮРТГЭЛ
+        </p>
 
         {success ? (
           <div style={{
-            textAlign: "center", padding: 20,
-            color: "#1D9E75", fontSize: 15,
+            textAlign: "center",
+            padding: 20,
+            color: "#1D9E75",
+            fontSize: 15,
           }}>
             Бүртгэл амжилттай! Login хуудас руу шилжиж байна...
           </div>
@@ -58,8 +78,15 @@ export default function MerchantRegister() {
               { key: "password", label: "Нууц үг", type: "password", placeholder: "••••••••" },
               { key: "secret", label: "Нууц код", type: "password", placeholder: "Adminаас авсан код" },
             ].map(f => (
-              <div key={f.key} style={{ marginBottom: 16 }}>
-                <label style={{ color: "#666", fontSize: 12 }}>{f.label}</label>
+              <div key={f.key} style={{ marginBottom: 18 }}>
+                <label style={{
+                  color: "#374151",
+                  fontSize: 12,
+                  fontWeight: 500
+                }}>
+                  {f.label}
+                </label>
+
                 <input
                   type={f.type}
                   value={form[f.key]}
@@ -67,34 +94,58 @@ export default function MerchantRegister() {
                   onChange={e => setForm({ ...form, [f.key]: e.target.value })}
                   required
                   style={{
-                    display: "block", width: "100%", marginTop: 6,
-                    padding: "10px 14px", background: "#1a1a1a",
-                    border: "1px solid #2a2a2a", borderRadius: 10,
-                    color: "#fff", fontSize: 14, boxSizing: "border-box",
+                    display: "block",
+                    width: "100%",
+                    marginTop: 6,
+                    padding: "12px 14px",
+                    background: "#f9fafb",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: 10,
+                    color: "#111",
+                    fontSize: 14,
+                    boxSizing: "border-box",
+                    outline: "none",
                   }}
                 />
               </div>
             ))}
 
             {error && (
-              <p style={{ color: "#ff4444", fontSize: 13, marginBottom: 16 }}>{error}</p>
+              <p style={{
+                color: "#dc2626",
+                fontSize: 13,
+                marginBottom: 16
+              }}>
+                {error}
+              </p>
             )}
 
-            <button type="submit" disabled={loading} style={{
-              width: "100%", padding: "12px",
-              background: "#1D9E75", border: "none",
-              borderRadius: 10, color: "#fff",
-              fontSize: 15, fontWeight: 700,
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.7 : 1,
-              marginTop: 8,
-            }}>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "13px",
+                background: "#1D9E75",
+                border: "none",
+                borderRadius: 12,
+                color: "#fff",
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.7 : 1,
+                marginTop: 10,
+                transition: "0.2s",
+              }}
+            >
               {loading ? "Бүртгэж байна..." : "Бүртгүүлэх"}
             </button>
 
             <p style={{
-              color: "#555", fontSize: 11,
-              textAlign: "center", marginTop: 16,
+              color: "#6b7280",
+              fontSize: 11,
+              textAlign: "center",
+              marginTop: 16,
             }}>
               Нууц кодыг зөвхөн WEARN админаас авна
             </p>
