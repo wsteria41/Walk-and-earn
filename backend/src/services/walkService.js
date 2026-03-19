@@ -84,7 +84,8 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
       `SELECT SUM(delta_steps) as daily_total
        FROM step_records
        WHERE user_id = ?
-       AND recorded_at >= CURDATE()`,
+       AND recorded_at >= CURDATE()
+       AND suspicious_flag = 0`,
       [userId]
     );
 
@@ -257,7 +258,7 @@ async function getHistory(userId, days = 7) {
     `SELECT 
         DATE(recorded_at) AS date,
         SUM(delta_steps) AS steps,
-        FLOOR(SUM(delta_steps) / 1000) AS points
+        FLOOR(SUM(CASE WHEN suspicious_flag = 0 THEN delta_steps ELSE 0 END) / 1000) AS points
      FROM step_records
      WHERE user_id = ?
      GROUP BY DATE(recorded_at)

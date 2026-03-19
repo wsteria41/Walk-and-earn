@@ -60,14 +60,7 @@ class StepManager {
     bool granted = await StepPermission.request();
     if (!granted) return;
 
-    // 🔥 2. HEALTH PERMISSION (ЗАСВАР)
-    bool healthOk = await _ensureHealthPermission();
-    if (!healthOk) {
-      log.e("Health permission NOT OK");
-      return;
-    }
-
-    log.i("Health permission OK ✅");
+    log.i("Health permission OK ");
 
     _timer = Timer.periodic(const Duration(seconds: 20), (timer) async {
       await _readSteps();

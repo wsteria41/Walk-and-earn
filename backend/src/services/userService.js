@@ -1,5 +1,14 @@
 const pool = require("../config/db");
 
+//Level tootsoolol
+function calculateLevel(totalPoints) {
+  if (totalPoints >= 5000) return 5;
+  if (totalPoints >= 2000) return 4;
+  if (totalPoints >= 1000) return 3;
+  if (totalPoints >= 500)  return 2;
+  return 1;
+}
+
 async function getLeaderboard() {
   const [rows] = await pool.query(`
     SELECT id, name, email, total_points
@@ -8,7 +17,6 @@ async function getLeaderboard() {
     ORDER BY total_points DESC
     LIMIT 10
   `);
-
   return { leaderboard: rows };
 }
 
@@ -38,61 +46,48 @@ async function getWeeklyLeaderboard() {
     ORDER BY ranked.rank_position
     LIMIT 10
   `);
-
   return { weeklyLeaderboard: rows };
 }
 
 async function getMyWeeklyRank(userId) {
-  const [myStepsRows] = await pool.query(//user iin 7 honogiin niit alhalt
-    `
-    SELECT IFNULL(SUM(delta_steps), 0) AS my_weekly_steps
-    FROM step_records
-    WHERE user_id = ?
-      AND recorded_at >= CURDATE() - INTERVAL 7 DAY
-    `,
+  const [myStepsRows] = await pool.query(
+    `SELECT IFNULL(SUM(delta_steps), 0) AS my_weekly_steps
+     FROM step_records
+     WHERE user_id = ?
+       AND recorded_at >= CURDATE() - INTERVAL 7 DAY`,
     [userId]
   );
-
   const myWeeklySteps = Number(myStepsRows[0].my_weekly_steps);
 
-  const [rankRows] = await pool.query(//myWeeklySteps-ees iluu alhalt hiisen user uudiig toolno
-    `
-    SELECT COUNT(*) + 1 AS my_rank
-    FROM (
-      SELECT user_id, SUM(delta_steps) AS total_steps
-      FROM step_records
-      WHERE recorded_at >= CURDATE() - INTERVAL 7 DAY
-      GROUP BY user_id
-    ) AS weekly_totals
-    WHERE weekly_totals.total_steps > ?
-    `,
+  const [rankRows] = await pool.query(
+    `SELECT COUNT(*) + 1 AS my_rank
+     FROM (
+       SELECT user_id, SUM(delta_steps) AS total_steps
+       FROM step_records
+       WHERE recorded_at >= CURDATE() - INTERVAL 7 DAY
+       GROUP BY user_id
+     ) AS weekly_totals
+     WHERE weekly_totals.total_steps > ?`,
     [myWeeklySteps]
   );
 
-  const myRank = rankRows[0].my_rank;
-
-  return {
-    myWeeklySteps,
-    myRank
-  };
+  return { myWeeklySteps, myRank: rankRows[0].my_rank };
 }
 
-async function getDailyStats(userId, days = 7) {//user iin suuliin N honogiin alhalt, onoog database aas avah
+async function getDailyStats(userId, days = 7) {
   const [rows] = await pool.query(
-    `
-    SELECT 
-      DATE(recorded_at) AS date,
-      SUM(delta_steps) AS steps,
-      FLOOR(SUM(delta_steps) / 1000) AS points
-    FROM step_records
-    WHERE user_id = ?
-      AND recorded_at >= CURDATE() - INTERVAL ? DAY
-    GROUP BY DATE(recorded_at)
-    `,
+    `SELECT 
+       DATE(recorded_at) AS date,
+       SUM(delta_steps) AS steps,
+       FLOOR(SUM(CASE WHEN suspicious_flag = 0 THEN delta_steps ELSE 0 END) / 1000) AS points
+     FROM step_records
+     WHERE user_id = ?
+       AND recorded_at >= CURDATE() - INTERVAL ? DAY
+     GROUP BY DATE(recorded_at)`,
     [userId, days]
   );
 
-  const dataMap = {}; //db ees irsen ogogdliig map bolgono
+  const dataMap = {};
   rows.forEach(r => {
     const formattedDate = r.date.toISOString().split("T")[0];
     dataMap[formattedDate] = {
@@ -101,15 +96,12 @@ async function getDailyStats(userId, days = 7) {//user iin suuliin N honogiin al
     };
   });
 
-  const result = []; //final result-g beltgene, hariu ni suuliin N honogiin ogogdliig aguulna
+  const result = [];
   const today = new Date();
-
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(today.getDate() - i);
-
     const dateStr = d.toISOString().split("T")[0];
-
     result.push({
       date: dateStr,
       steps: dataMap[dateStr]?.steps || 0,
@@ -120,49 +112,43 @@ async function getDailyStats(userId, days = 7) {//user iin suuliin N honogiin al
   return { dailyStats: result };
 }
 
-
 async function getUserDashboard(userId) {
-
   const [userRows] = await pool.query(
-    `
-    SELECT id, name, email, total_points, daily_goal, profile_photo
-    FROM users
-    WHERE id = ?
-    `,
+    `SELECT id, name, email, total_points, daily_goal, profile_photo
+     FROM users WHERE id = ?`,
     [userId]
   );
 
-  if (!userRows.length) {
-    throw new Error("User not found");
-  }
-
+  if (!userRows.length) throw new Error("User not found");
   const user = userRows[0];
 
   const [todayRows] = await pool.query(
-    `
-    SELECT IFNULL(SUM(delta_steps),0) AS today_steps
-    FROM step_records
-    WHERE user_id = ?
-    AND DATE(recorded_at) = CURDATE()
-    `,
+    `SELECT IFNULL(SUM(delta_steps), 0) AS today_steps
+     FROM step_records
+     WHERE user_id = ? AND DATE(recorded_at) = CURDATE()`,
     [userId]
   );
-
   const todaySteps = Number(todayRows[0].today_steps);
 
   const [weeklyRows] = await pool.query(
-    `
-    SELECT IFNULL(SUM(delta_steps),0) AS weekly_steps
-    FROM step_records
-    WHERE user_id = ?
-    AND recorded_at >= CURDATE() - INTERVAL 7 DAY
-    `,
+    `SELECT IFNULL(SUM(delta_steps), 0) AS weekly_steps
+     FROM step_records
+     WHERE user_id = ?
+       AND recorded_at >= CURDATE() - INTERVAL 7 DAY`,
     [userId]
   );
-
   const weeklySteps = Number(weeklyRows[0].weekly_steps);
 
-  const todayPoints = Math.floor(todaySteps / 1000);
+  // suspicius alhmiig hasna
+  const [ptRows] = await pool.query(
+    `SELECT IFNULL(SUM(delta_steps), 0) AS valid_steps
+     FROM step_records
+     WHERE user_id = ?
+       AND DATE(recorded_at) = CURDATE()
+       AND suspicious_flag = 0`,
+    [userId]
+  );
+  const todayPoints = Math.floor(Number(ptRows[0].valid_steps) / 1000);
 
   return {
     user: {
@@ -170,6 +156,7 @@ async function getUserDashboard(userId) {
       name: user.name,
       email: user.email,
       totalPoints: user.total_points,
+      level: calculateLevel(user.total_points), 
       dailyGoal: user.daily_goal,
       profile_photo: user.profile_photo
     },
@@ -178,83 +165,69 @@ async function getUserDashboard(userId) {
     todayPoints
   };
 }
-async function updateGoal(userId, goal) {//user iin daily goal-g shineer tohiruulah
-      await pool.query(
-        `
-        UPDATE users
-        SET daily_goal = ?
-        WHERE id = ?
-        `,
-        [goal, userId]
-      );
 
-      return { message: "Goal updated" };
-    }
+async function updateGoal(userId, goal) {
+  await pool.query(
+    `UPDATE users SET daily_goal = ? WHERE id = ?`,
+    [goal, userId]
+  );
+  return { message: "Goal updated" };
+}
 
-    async function getUserProfile(userId) {
-
-      const [rows] = await pool.query(
-        `SELECT id, name, email, phone, location, profile_photo,
-        age, height, weight, birth_year, bmi
-        FROM users WHERE id=?`,
-        [userId]
-      );
-
-      return rows[0];
-    }
-
-    async function updateProfile(userId, name, phone, location) {
-
-      await pool.query(
-        `UPDATE users 
-        SET name=?, phone=?, location=? 
-        WHERE id=?`,
-        [name, phone, location, userId]
-      );
-
-    }
-
-    async function updateHealth(userId, age, height, weight, birth_year) {
-
-      const bmi = weight / ((height / 100) * (height / 100));
-
-      await pool.query(
-        `UPDATE users 
-        SET age=?, height=?, weight=?, birth_year=?, bmi=? 
-        WHERE id=?`,
-        [age, height, weight, birth_year, bmi.toFixed(2), userId]
-      );
-    }
-
-    
-async function getTotalStats(userId) {
-
+async function getUserProfile(userId) {
   const [rows] = await pool.query(
-    `
-    SELECT 
-      IFNULL(SUM(delta_steps),0) AS totalSteps,
-      FLOOR(IFNULL(SUM(delta_steps),0) / 1000) AS rewards,
-      COUNT(DISTINCT DATE(recorded_at)) AS activeDays
-    FROM step_records
-    WHERE user_id = ?
-    `,
+    `SELECT id, name, email, phone, location, profile_photo,
+            total_points, age, height, weight, birth_year, bmi
+     FROM users WHERE id = ?`,
     [userId]
   );
 
+  if (!rows.length) return null;
+
+  const user = rows[0];
+
+  //Level DB ees bish tootsoolj butsaana 
+  return {
+    ...user,
+    level: calculateLevel(user.total_points)
+  };
+}
+
+async function updateProfile(userId, name, phone, location) {
+  await pool.query(
+    `UPDATE users SET name=?, phone=?, location=? WHERE id=?`,
+    [name, phone, location, userId]
+  );
+}
+
+async function updateHealth(userId, age, height, weight, birth_year) {
+  const bmi = weight / ((height / 100) * (height / 100));
+  await pool.query(
+    `UPDATE users SET age=?, height=?, weight=?, birth_year=?, bmi=? WHERE id=?`,
+    [age, height, weight, birth_year, bmi.toFixed(2), userId]
+  );
+}
+
+async function getTotalStats(userId) {
+  const [rows] = await pool.query(
+    `SELECT 
+       IFNULL(SUM(delta_steps), 0) AS totalSteps,
+       FLOOR(IFNULL(SUM(CASE WHEN suspicious_flag = 0 THEN delta_steps ELSE 0 END), 0) / 1000) AS rewards,
+       COUNT(DISTINCT DATE(recorded_at)) AS activeDays
+     FROM step_records
+     WHERE user_id = ?`,
+    [userId]
+  );
   return rows[0];
 }
 
-
 async function updateProfilePhoto(userId, photoUrl) {
-
   await pool.query(
-    `UPDATE users 
-     SET profile_photo = ?
-     WHERE id = ?`,
+    `UPDATE users SET profile_photo = ? WHERE id = ?`,
     [photoUrl, userId]
   );
-
 }
+
 module.exports = {
   getWeeklyLeaderboard,
   getMyWeeklyRank,
