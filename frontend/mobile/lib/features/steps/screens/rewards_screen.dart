@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/api/api_service.dart';
 import 'package:intl/intl.dart';
+import 'reward_detail_screen.dart';
 
 class RewardsScreen extends StatefulWidget {
   const RewardsScreen({super.key});
@@ -53,21 +54,6 @@ class _RewardsScreenState extends State<RewardsScreen>
     }
   }
 
-  Future<void> redeem(int rewardId, int requiredPoints) async {
-    if (userPoints < requiredPoints) {
-      _showSnack("Оноо хүрэлцэхгүй байна", isError: true);
-      return;
-    }
-
-    try {
-      await api.redeemReward(rewardId);
-      _showSnack("Амжилттай! Хүлээгдэж байна");
-      loadData();
-    } catch (e) {
-      _showSnack(e.toString().replaceAll("Exception: ", ""), isError: true);
-    }
-  }
-
   void _showSnack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -113,9 +99,7 @@ class _RewardsScreenState extends State<RewardsScreen>
                   /// BALANCE ROW
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
+                        horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       color: Colors.white10,
                       borderRadius: BorderRadius.circular(14),
@@ -130,9 +114,7 @@ class _RewardsScreenState extends State<RewardsScreen>
                             const Text(
                               "YOUR BALANCE",
                               style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 11,
-                              ),
+                                  color: Colors.white54, fontSize: 11),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -146,9 +128,7 @@ class _RewardsScreenState extends State<RewardsScreen>
                             const Text(
                               "points available",
                               style: TextStyle(
-                                color: Colors.white60,
-                                fontSize: 12,
-                              ),
+                                  color: Colors.white60, fontSize: 12),
                             ),
                           ],
                         ),
@@ -158,11 +138,8 @@ class _RewardsScreenState extends State<RewardsScreen>
                             color: const Color(0xFF7B2FFF),
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Icon(
-                            Icons.emoji_events,
-                            color: Colors.white,
-                            size: 26,
-                          ),
+                          child: const Icon(Icons.emoji_events,
+                              color: Colors.white, size: 26),
                         ),
                       ],
                     ),
@@ -188,9 +165,7 @@ class _RewardsScreenState extends State<RewardsScreen>
                       labelColor: Colors.white,
                       unselectedLabelColor: Colors.white38,
                       labelStyle: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
+                          fontWeight: FontWeight.w600, fontSize: 13),
                       tabs: const [
                         Tab(text: "Available"),
                         Tab(text: "History"),
@@ -217,12 +192,22 @@ class _RewardsScreenState extends State<RewardsScreen>
   }
 
   Widget _buildAvailable() {
+    if (rewards.isEmpty) {
+      return const Center(
+        child: Text(
+          "Урамшуулал байхгүй байна",
+          style: TextStyle(color: Colors.white38),
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       itemCount: rewards.length,
       itemBuilder: (context, i) {
         final r = rewards[i];
-        final int required = int.tryParse(r["required_points"].toString()) ?? 0;
+        final int required =
+            int.tryParse(r["required_points"].toString()) ?? 0;
         final int? discount = r["discount_percent"] != null
             ? int.tryParse(r["discount_percent"].toString())
             : null;
@@ -230,92 +215,95 @@ class _RewardsScreenState extends State<RewardsScreen>
         final String? imageUrl = r["image_url"];
         final bool canRedeem = userPoints >= required;
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFF111111),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF2A2A2A)),
-          ),
-          child: Row(
-            children: [
-              // ЗУРАГ / ICON
-              _rewardMedia(imageUrl, type),
-              const SizedBox(width: 14),
-
-              // МЭДЭЭЛЭЛ
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      r["name"] ?? "",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    if (r["business_name"] != null)
-                      Text(
-                        r["business_name"],
-                        style: const TextStyle(
-                          color: Colors.white38,
-                          fontSize: 11,
-                        ),
-                      ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Text(
-                          "$required оноо",
-                          style: const TextStyle(
-                            color: Color(0xFFB985FF),
-                            fontSize: 12,
-                          ),
-                        ),
-                        if (discount != null) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1D9E75).withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: const Color(0xFF1D9E75).withOpacity(0.4),
-                              ),
-                            ),
-                            child: Text(
-                              "$discount% хөнгөлөлт",
-                              style: const TextStyle(
-                                color: Color(0xFF1D9E75),
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
+        return GestureDetector(
+          // ✅ Карт дарахад detail screen нээнэ
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => RewardDetailScreen(
+                  reward: r,
+                  userPoints: userPoints,
+                  onRedeemed: loadData,
                 ),
               ),
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF111111),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF2A2A2A)),
+            ),
+            child: Row(
+              children: [
+                // ЗУРАГ / ICON
+                _rewardMedia(imageUrl, type),
+                const SizedBox(width: 14),
 
-              // REDEEM ТОВЧ
-              GestureDetector(
-                onTap: canRedeem
-                    ? () => _confirmRedeem(r["id"], required, r["name"])
-                    : null,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
+                // МЭДЭЭЛЭЛ
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        r["name"] ?? "",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (r["business_name"] != null)
+                        Text(
+                          r["business_name"],
+                          style: const TextStyle(
+                              color: Colors.white38, fontSize: 11),
+                        ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Text(
+                            "$required оноо",
+                            style: const TextStyle(
+                                color: Color(0xFFB985FF), fontSize: 12),
+                          ),
+                          if (discount != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1D9E75)
+                                    .withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                    color: const Color(0xFF1D9E75)
+                                        .withOpacity(0.4)),
+                              ),
+                              child: Text(
+                                "$discount% хөнгөлөлт",
+                                style: const TextStyle(
+                                  color: Color(0xFF1D9E75),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
                   ),
+                ),
+
+                // REDEEM BADGE
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: canRedeem
                         ? const Color(0xFF7B2FFF)
@@ -331,8 +319,8 @@ class _RewardsScreenState extends State<RewardsScreen>
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -360,7 +348,7 @@ class _RewardsScreenState extends State<RewardsScreen>
       "DISCOUNT": {"icon": Icons.percent, "color": const Color(0xFF1D9E75)},
       "FREEBIE": {
         "icon": Icons.card_giftcard,
-        "color": const Color(0xFFf59e0b),
+        "color": const Color(0xFFf59e0b)
       },
     };
     final c = config[type] ?? config["DISCOUNT"]!;
@@ -370,49 +358,11 @@ class _RewardsScreenState extends State<RewardsScreen>
       decoration: BoxDecoration(
         color: (c["color"] as Color).withOpacity(0.15),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: (c["color"] as Color).withOpacity(0.3)),
+        border:
+            Border.all(color: (c["color"] as Color).withOpacity(0.3)),
       ),
-      child: Icon(c["icon"] as IconData, color: c["color"] as Color, size: 26),
-    );
-  }
-
-  void _confirmRedeem(int id, int points, String name) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          "Confirm Redeem",
-          style: TextStyle(color: Colors.white),
-        ),
-        content: Text(
-          "$name — $points оноо зарцуулна",
-          style: const TextStyle(color: Colors.white60),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              "Cancel",
-              style: TextStyle(color: Colors.white38),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7B2FFF),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              redeem(id, points);
-            },
-            child: const Text("Confirm"),
-          ),
-        ],
-      ),
+      child: Icon(c["icon"] as IconData,
+          color: c["color"] as Color, size: 26),
     );
   }
 
@@ -460,11 +410,8 @@ class _RewardsScreenState extends State<RewardsScreen>
                   color: const Color(0xFF1B0036),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.receipt_long,
-                  color: Color(0xFFB985FF),
-                  size: 20,
-                ),
+                child: const Icon(Icons.receipt_long,
+                    color: Color(0xFFB985FF), size: 20),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -483,22 +430,19 @@ class _RewardsScreenState extends State<RewardsScreen>
                     Text(
                       "${r["points_used"]} points • $date",
                       style: const TextStyle(
-                        color: Colors.white38,
-                        fontSize: 12,
-                      ),
+                          color: Colors.white38, fontSize: 12),
                     ),
                   ],
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                    horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: statusColor.withOpacity(0.4)),
+                  border:
+                      Border.all(color: statusColor.withOpacity(0.4)),
                 ),
                 child: Text(
                   status,

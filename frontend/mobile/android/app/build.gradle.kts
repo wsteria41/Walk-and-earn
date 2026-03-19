@@ -6,13 +6,13 @@ plugins {
 
 android {
     namespace = "com.example.mobile"
-    compileSdk = 34
+    compileSdk = 36
     ndkVersion = "29.0.14206865"
 
     defaultConfig {
         applicationId = "com.example.mobile"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 36
 
         versionCode = flutter.versionCode
         versionName = flutter.versionName
