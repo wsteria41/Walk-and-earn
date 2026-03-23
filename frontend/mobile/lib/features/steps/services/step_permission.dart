@@ -7,67 +7,39 @@ final Logger log = Logger();
 
 class StepPermission {
   static Future<bool> request() async {
-    try {
-      if (Platform.isAndroid) {
-        // 1. Activity recognition
-        var activityStatus = await Permission.activityRecognition.request();
-        log.d("Activity: $activityStatus");
+  if (Platform.isAndroid) {
+    final activityStatus = await Permission.activityRecognition.request();
+    if (!activityStatus.isGranted) return false;
 
-        // 2. Location
-        var locationStatus = await Permission.locationWhenInUse.request();
-        log.d("Location: $locationStatus");
+    final locationStatus = await Permission.locationWhenInUse.request();
+    if (!locationStatus.isGranted) return false;
 
-        if (activityStatus.isPermanentlyDenied ||
-            locationStatus.isPermanentlyDenied) {
-          await openAppSettings();
-          return false;
-        }
+    final health = Health();
 
-        if (!activityStatus.isGranted || !locationStatus.isGranted) {
-          return false;
-        }
+    await health.configure();
 
-        // 3. Health Connect
-        final health = Health();
-        final sdkStatus = await health.getHealthConnectSdkStatus();
-
-        if (sdkStatus != HealthConnectSdkStatus.sdkAvailable) {
-          log.w("Health Connect SDK not available: $sdkStatus");
-          await health.installHealthConnect();
-          return false;
-        }
-
-        final requested = await health.requestAuthorization(
-          [HealthDataType.STEPS],
-          permissions: [HealthDataAccess.READ],
-        );
-
-        log.i("Health permission result: $requested");
-
-        if (!requested) {
-          log.w("❌ Health permission denied");
-          return false;
-        }
-
-        log.i("Health Connect permission requested ✅");
-        final now = DateTime.now();
-        final midnight = DateTime(now.year, now.month, now.day);
-
-        try {
-          await health.getTotalStepsInInterval(midnight, now);
-          log.i("Health permission confirmed ✅");
-          return true;
-        } catch (e) {
-          log.w("Health permission not granted: $e");
-          return false; // ✅ зөв
-        }
-      }
-
-      if (Platform.isIOS) return true;
+    final sdkStatus = await health.getHealthConnectSdkStatus();
+    if (sdkStatus != HealthConnectSdkStatus.sdkAvailable) {
+      await health.installHealthConnect();
       return false;
+    }
+
+    final granted = await health.requestAuthorization(
+      [HealthDataType.STEPS],
+      permissions: [HealthDataAccess.READ],
+    );
+    if (!granted) return false;
+
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day);
+    try {
+      await health.getTotalStepsInInterval(midnight, now);
+      return true;
     } catch (e) {
-      log.e("Permission error: $e");
       return false;
     }
   }
+  if (Platform.isIOS) return true;
+  return false;
+}
 }

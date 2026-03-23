@@ -52,4 +52,8 @@ app.get("/me", authMiddleware, (req, res) => {
   });
 });
 
+app.get('/', (req, res) => {
+  res.redirect('https://admin.wearn.me');
+});
+
 module.exports = app;

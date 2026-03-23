@@ -2,36 +2,32 @@ import '../../../core/api/api_service.dart';
 import '../../../core/constants/api_constants.dart';
 import 'package:logger/logger.dart';
 
-final Logger log = Logger();
-
 class StepService {
-
-  final ApiService api = ApiService();
+  final ApiService _api = ApiService();
+  final Logger _log = Logger();
 
   Future<void> syncSteps(
     int totalSteps,
     double latitude,
     double longitude,
   ) async {
-
     try {
+      _log.i("SYNC REQUEST → totalSteps: $totalSteps, lat: $latitude, lng: $longitude");
 
-      final response = await api.post(
+      final response = await _api.post(
         ApiConstants.syncSteps,
         {
           "totalSteps": totalSteps,
           "latitude": latitude,
-          "longitude": longitude
+          "longitude": longitude,
         },
       );
 
-      log.i("Steps synced: $response");
+      _log.i("SYNC RESPONSE status: ${response.statusCode}");
+      _log.i("SYNC RESPONSE body: ${response.body}");
 
     } catch (e) {
-
-      log.i("STEP SYNC ERROR: $e");
-
+      _log.e("STEP SYNC ERROR: $e");
     }
   }
-
 }

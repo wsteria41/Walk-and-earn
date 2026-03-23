@@ -2,8 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:health/health.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -37,7 +35,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _fadeController.forward();
-
     checkLogin();
   }
 
@@ -46,140 +43,66 @@ class _SplashScreenState extends State<SplashScreen>
     _fadeController.dispose();
     super.dispose();
   }
-Future<void> checkLogin() async {
-  String? token = await storage.read(key: "token");
-  await Future.delayed(const Duration(seconds: 2));
-  if (!mounted) return;
 
-  if (token != null) {
-    // ✅ Permission хүсэхгүй — dashboard дотор хийнэ
-    Navigator.pushReplacementNamed(context, "/dashboard");
-  } else {
-    Navigator.pushReplacementNamed(context, "/auth");
+  Future<void> checkLogin() async {
+    String? token = await storage.read(key: "token");
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    if (token != null) {
+      Navigator.pushReplacementNamed(context, "/dashboard");
+    } else {
+      Navigator.pushReplacementNamed(context, "/auth");
+    }
   }
-}
-  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0015),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0A0015),
-              Color(0xFF1B0036),
-              Color(0xFF2D0060),
-              Color(0xFF1A0040),
-              Color(0xFF0D001A),
-            ],
-            stops: [0.0, 0.25, 0.5, 0.75, 1.0],
-          ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              top: -80,
-              left: -60,
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF7B2FFF).withOpacity(0.3),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            Positioned(
-              bottom: -60,
-              right: -40,
-              child: Container(
-                width: 250,
-                height: 250,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF4A00B4).withOpacity(0.4),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: SizedBox(
-                width: double.infinity,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Spacer(flex: 3),
-
-                    ShaderMask(
-                      shaderCallback: (bounds) {
-                        return const LinearGradient(
-                          colors: [
-                            Colors.white,
-                            Color(0xFFD4B4FF),
-                            Color(0xFF9B4DFF),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ).createShader(bounds);
-                      },
-                      child: const Text(
-                        "WEARN",
-                        style: TextStyle(
-                          fontSize: 64,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 8,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    const Text(
-                      "WALK. EARN. REPEAT.",
-                      style: TextStyle(
-                        color: Color(0xFFB985FF),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 3,
-                      ),
-                    ),
-
-                    const Spacer(flex: 4),
-
-                    const Text(
-                      "v1.0.0",
-                      style: TextStyle(
-                        color: Color(0xFF6B4A8A),
-                        fontSize: 12,
-                        letterSpacing: 1,
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
+      // ✅ Цэвэр хар фон
+      backgroundColor: Colors.black,
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // ✅ "WEARN" — цагаан → ягаан gradient
+              ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [
+                    Colors.white,
+                    Color(0xFFD4B4FF),
+                    Color(0xFFB56DFF),
                   ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ).createShader(bounds),
+                child: const Text(
+                  "WEARN",
+                  style: TextStyle(
+                    fontSize: 56,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 8,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 10),
+
+           
+              const Text(
+                "WALK. EARN. REPEAT.",
+                style: TextStyle(
+                  color: Color(0xFFAAAAAA),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 3,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

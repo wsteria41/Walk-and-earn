@@ -10,30 +10,31 @@ class StepCounter {
   final Logger log = Logger();
 
   Future<void> startListening(Function(int) onStep) async {
+
     bool granted = await StepPermission.request();
     if (!granted) {
-      log.w("Activity permission denied");
+      log.w("Permission denied");
       return;
     }
 
+    await _readSteps(onStep);
+  }
+
+  Future<void> _readSteps(Function(int) onStep) async {
     try {
-final types = [HealthDataType.STEPS];
-final permissions = [HealthDataAccess.READ];
-
-// ⚠️ Шууд permission хүс
-bool requested = await health.requestAuthorization(
-  types,
-  permissions: permissions,
-);
-
-if (!requested) {
-  log.w("Health permission denied");
-  return;
-}
-
       final now = DateTime.now();
       final midnight = DateTime(now.year, now.month, now.day);
+
       int? steps = await health.getTotalStepsInInterval(midnight, now);
+
+      if (steps == null) {
+        final data = await health.getHealthDataFromTypes(
+          types: [HealthDataType.STEPS],
+          startTime: midnight,
+          endTime: now,
+        );
+        steps = data.fold(0, (sum, d) => sum! + (d.value as num).toInt());
+      }
 
       _steps = steps ?? 0;
       log.i("TODAY STEPS: $_steps");

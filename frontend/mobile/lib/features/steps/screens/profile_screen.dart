@@ -5,6 +5,7 @@ import '../../../features/steps/tab/health_details_screen.dart';
 import '../../../features/steps/tab/help_support_screen.dart';
 import '../../../features/steps/tab/settings_screen.dart';
 import '../../auth/screens/auth_screen.dart';
+import 'package:mobile/l10n/app_localizations.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,11 +22,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String email = "";
   int points = 0;
   int level = 1;
-
   int totalSteps = 0;
   int rewards = 0;
   int streak = 0;
-
   bool loading = true;
 
   @override
@@ -36,34 +35,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> loadProfile() async {
     try {
-      /// USER PROFILE
       final profile = await apiService.getProfile();
-
-      /// TOTAL STATS
       final stats = await apiService.getTotalStats();
-
-      debugPrint("PROFILE DATA: $profile");
-      debugPrint("STATS DATA: $stats");
-
       if (!mounted) return;
-
       setState(() {
-        /// USER
         name = profile["name"] ?? "";
         email = profile["email"] ?? "";
         profilePhoto = profile["profile_photo"] ?? "";
-
         points = int.tryParse(profile["totalPoints"].toString()) ?? 0;
-
         level = int.tryParse(profile["level"].toString()) ?? 1;
-
-        /// STATS
         totalSteps = int.tryParse(stats["totalSteps"].toString()) ?? 0;
-
         rewards = int.tryParse(stats["rewards"].toString()) ?? 0;
-
         streak = int.tryParse(stats["activeDays"].toString()) ?? 0;
-
         loading = false;
       });
     } catch (e) {
@@ -74,6 +57,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+
     if (loading) {
       return const Scaffold(
         backgroundColor: Colors.black,
@@ -87,7 +72,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              /// HEADER
               Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -106,20 +90,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         end: Alignment.bottomRight,
                       ),
                     ),
-                    child: const Align(
+                    child: Align(
                       alignment: Alignment.topLeft,
-                      child: Text(
-                        "Profile",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: Text(l.profile,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold)),
                     ),
                   ),
-
-                  /// PROFILE CARD
                   Positioned(
                     bottom: -40,
                     left: 20,
@@ -139,7 +118,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: Row(
                         children: [
-                          /// AVATAR
                           Container(
                             width: 60,
                             height: 60,
@@ -150,52 +128,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(16),
                               child: profilePhoto.isNotEmpty
-                                  ? Image.network(
-                                      profilePhoto,
-                                      fit: BoxFit.cover,
-                                    )
+                                  ? Image.network(profilePhoto,
+                                      fit: BoxFit.cover)
                                   : Center(
                                       child: Text(
                                         name.isNotEmpty
                                             ? name[0].toUpperCase()
                                             : "U",
                                         style: const TextStyle(
-                                          fontSize: 26,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                            fontSize: 26,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold),
                                       ),
                                     ),
                             ),
                           ),
-
                           const SizedBox(width: 16),
-
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  name.isNotEmpty ? name : "User",
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-
-                                Text(
-                                  email,
-                                  style: const TextStyle(color: Colors.white70),
-                                ),
-
+                                Text(name.isNotEmpty ? name : "User",
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold)),
+                                Text(email,
+                                    style: const TextStyle(
+                                        color: Colors.white70)),
                                 const SizedBox(height: 8),
-
                                 Row(
                                   children: [
-                                    buildBadge("Level $level"),
+                                    _buildBadge("Level $level"),
                                     const SizedBox(width: 10),
-                                    buildBadge("$points pts"),
+                                    _buildBadge("$points pts"),
                                   ],
                                 ),
                               ],
@@ -210,69 +176,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: 60),
 
-              /// STATS
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    buildStat(
-                      "Steps",
-                      formatSteps(totalSteps),
-                      Icons.directions_walk,
-                    ),
-
-                    buildStat(
-                      "Rewards",
-                      rewards.toString(),
-                      Icons.emoji_events,
-                    ),
-
-                    buildStat(
-                      "Streak",
-                      streak.toString(),
-                      Icons.local_fire_department,
-                    ),
+                    _buildStat(l.totalSteps, _formatSteps(totalSteps),
+                        Icons.directions_walk),
+                    _buildStat(l.rewards, rewards.toString(),
+                        Icons.emoji_events),
+                    _buildStat(l.streak, streak.toString(),
+                        Icons.local_fire_department),
                   ],
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              buildMenu("Edit Profile", Icons.person_outline, () {
+              _buildMenu(l.editProfile, Icons.person_outline, () {
                 Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const EditProfileScreen(),
-                  ),
-                );
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const EditProfileScreen()));
               }),
-
-              buildMenu("Health Details", Icons.favorite_border, () {
+              _buildMenu(l.healthDetails, Icons.favorite_border, () {
                 Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HealthDetailsScreen(),
-                  ),
-                );
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const HealthDetailsScreen()));
               }),
-
-              buildMenu("Settings", Icons.settings, () {
+              _buildMenu(l.settings, Icons.settings, () {
                 Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SettingsScreen(),
-                  ),
-                );
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const SettingsScreen()));
               }),
-
-              buildMenu("Help & Support", Icons.help_outline, () {
+              _buildMenu(l.helpSupport, Icons.help_outline, () {
                 Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HelpSupportScreen(),
-                  ),
-                );
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const HelpSupportScreen()));
               }),
 
               const SizedBox(height: 20),
@@ -285,29 +228,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     backgroundColor: const Color.fromARGB(255, 214, 80, 70),
                     padding: const EdgeInsets.all(16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                        borderRadius: BorderRadius.circular(20)),
                   ),
                   onPressed: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const AuthScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const AuthScreen()),
                       (route) => false,
                     );
                   },
-                  child: const Text("Logout"),
+                  child: Text(l.logout),
                 ),
               ),
 
               const SizedBox(height: 20),
-
-              const Text(
-                "WEARN v1.0.0  Made with ❤️",
-                style: TextStyle(color: Colors.white38, fontSize: 12),
-              ),
-
+              const Text("WEARN v1.0.0  Made with ❤️",
+                  style: TextStyle(color: Colors.white38, fontSize: 12)),
               const SizedBox(height: 20),
             ],
           ),
@@ -316,28 +252,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  String formatSteps(int steps) {
-    if (steps >= 1000) {
-      return "${(steps / 1000).toStringAsFixed(0)}K";
-    }
+  String _formatSteps(int steps) {
+    if (steps >= 1000) return "${(steps / 1000).toStringAsFixed(0)}K";
     return steps.toString();
   }
 
-  Widget buildBadge(String text) {
+  Widget _buildBadge(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white24),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.white, fontSize: 12),
-      ),
+      child: Text(text,
+          style: const TextStyle(color: Colors.white, fontSize: 12)),
     );
   }
 
-  Widget buildStat(String title, String value, IconData icon) {
+  Widget _buildStat(String title, String value, IconData icon) {
     return Container(
       width: MediaQuery.of(context).size.width * 0.28,
       padding: const EdgeInsets.all(16),
@@ -349,24 +281,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Icon(icon, color: Colors.purpleAccent),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            title,
-            style: const TextStyle(color: Colors.white54, fontSize: 12),
-          ),
+          Text(value,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold)),
+          Text(title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white54, fontSize: 11)),
         ],
       ),
     );
   }
 
-  Widget buildMenu(String title, IconData icon, VoidCallback onTap) {
+  Widget _buildMenu(String title, IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -381,13 +309,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Icon(icon, color: Colors.purpleAccent),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(title, style: const TextStyle(color: Colors.white)),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.white54,
-              size: 16,
-            ),
+                child: Text(title,
+                    style: const TextStyle(color: Colors.white))),
+            const Icon(Icons.arrow_forward_ios,
+                color: Colors.white54, size: 16),
           ],
         ),
       ),

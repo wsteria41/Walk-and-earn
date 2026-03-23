@@ -2,102 +2,62 @@
   "@@locale": "en",
 
   "settings": "Settings",
-  "@settings": {
-    "description": "Title for the settings screen"
-  },
-
   "darkMode": "Dark Mode",
-  "@darkMode": {
-    "description": "Toggle to enable or disable dark mode"
-  },
-
   "notifications": "Notifications",
-  "@notifications": {
-    "description": "Toggle to enable or disable notifications"
-  },
-
   "language": "Language",
-  "@language": {
-    "description": "Option to select application language"
-  },
-
   "login": "Login",
-  "@login": {
-    "description": "Button text for user login"
-  },
-
   "register": "Register",
-  "@register": {
-    "description": "Button text for creating a new account"
-  },
-
   "email": "Email",
-  "@email": {
-    "description": "Label for email input field"
-  },
-
   "password": "Password",
-  "@password": {
-    "description": "Label for password input field"
-  },
-
   "name": "Name",
-  "@name": {
-    "description": "Label for name input field"
-  },
-
-  "dashboard": "Dashboard",
-  "@dashboard": {
-    "description": "Title of the main dashboard screen"
-  },
-
+  "dashboard": "Home",
   "todaySteps": "Today's Steps",
-  "@todaySteps": {
-    "description": "Number of steps the user has walked today"
-  },
-
   "totalSteps": "Total Steps",
-  "@totalSteps": {
-    "description": "Total steps accumulated by the user"
-  },
-
   "distance": "Distance",
-  "@distance": {
-    "description": "Distance walked by the user"
-  },
-
   "calories": "Calories",
-  "@calories": {
-    "description": "Calories burned from walking"
-  },
-
   "history": "History",
-  "@history": {
-    "description": "Navigation item for step history screen"
-  },
-
   "rewards": "Rewards",
-  "@rewards": {
-    "description": "Navigation item for rewards or vouchers screen"
-  },
-
   "profile": "Profile",
-  "@profile": {
-    "description": "Navigation item for user profile screen"
-  },
-
   "logout": "Logout",
-  "@logout": {
-    "description": "Button text for logging out of the account"
-  },
-
   "save": "Save",
-  "@save": {
-    "description": "Button text for saving changes"
-  },
-
   "cancel": "Cancel",
-  "@cancel": {
-    "description": "Button text for canceling an action"
-  }
+
+  "pointsAvailable": "points available",
+  "available": "Available",
+  "thisWeek": "This week",
+  "points": "Points",
+  "days": "Days",
+  "editProfile": "Edit Profile",
+  "healthDetails": "Health Details",
+  "helpSupport": "Help & Support",
+  "streak": "Streak",
+  "todayPoints": "Today Points",
+  "keepWalking": "Keep Walking!",
+  "moreSteps": "more steps to reach your goal!",
+  "goal": "Goal",
+  "dailyActivity": "Daily Activity",
+  "yourBalance": "YOUR BALANCE",
+  "chooseLanguage": "Choose Language",
+  "enableNotifications": "Enable Notifications",
+  "appLanguage": "App Language",
+  "postpone": "Postpone",
+  "openSettings": "Open Settings",
+  "healthPermissionTitle": "Health Connect Permission",
+  "healthPermissionDesc": "Permission to read step data is required. Please allow access to Health Connect in Settings.",
+  "setDailyGoal": "Set Daily Goal",
+  "enterSteps": "Enter steps (ex: 10000)",
+  "steps": "steps",
+  "time": "Time",
+  "saveChanges": "Save Changes",
+  "changePhoto": "Change Photo",
+  "updateHealthInfo": "Update your health information",
+  "calculatedStats": "Calculated Stats",
+  "weAreHereToHelp": "We're here to help you",
+  "faq": "Frequently Asked Questions",
+  "howEarnPoints": "How do I earn points?",
+  "howEarnPointsAnswer": "Walk and track your steps! Every 1000 steps you take earns you 1 point in the WEARN app.",
+  "howRedeemRewards": "How do I redeem rewards?",
+  "howRedeemRewardsAnswer": "Go to the Rewards tab and tap 'Redeem Now' on any reward you want to claim.",
+  "canTransferPoints": "Can I transfer points to friends?",
+  "canTransferPointsAnswer": "Not yet, but this feature is coming soon in future updates!"
 }

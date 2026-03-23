@@ -2,102 +2,62 @@
   "@@locale": "mn",
 
   "settings": "Тохиргоо",
-  "@settings": {
-    "description": "Тохиргооны дэлгэцийн гарчиг"
-  },
-
   "darkMode": "Харанхуй горим",
-  "@darkMode": {
-    "description": "Харанхуй горимыг асаах эсвэл унтраах сонголт"
-  },
-
   "notifications": "Мэдэгдэл",
-  "@notifications": {
-    "description": "Мэдэгдлийг асаах эсвэл унтраах тохиргоо"
-  },
-
   "language": "Хэл",
-  "@language": {
-    "description": "Аппликейшний хэл сонгох тохиргоо"
-  },
-
   "login": "Нэвтрэх",
-  "@login": {
-    "description": "Хэрэглэгч системд нэвтрэх товч"
-  },
-
   "register": "Бүртгүүлэх",
-  "@register": {
-    "description": "Шинэ хэрэглэгч бүртгүүлэх товч"
-  },
-
   "email": "Имэйл",
-  "@email": {
-    "description": "Имэйл оруулах талбарын нэр"
-  },
-
   "password": "Нууц үг",
-  "@password": {
-    "description": "Нууц үг оруулах талбарын нэр"
-  },
-
   "name": "Нэр",
-  "@name": {
-    "description": "Хэрэглэгчийн нэр оруулах талбар"
-  },
-
-  "dashboard": "Хянах самбар",
-  "@dashboard": {
-    "description": "Аппликейшний үндсэн самбар"
-  },
-
+  "dashboard": "Нүүр",
   "todaySteps": "Өнөөдрийн алхам",
-  "@todaySteps": {
-    "description": "Өнөөдөр алхсан алхмын тоо"
-  },
-
   "totalSteps": "Нийт алхам",
-  "@totalSteps": {
-    "description": "Хэрэглэгчийн нийт алхмын тоо"
-  },
-
   "distance": "Зай",
-  "@distance": {
-    "description": "Алхсан нийт зай"
-  },
-
   "calories": "Калори",
-  "@calories": {
-    "description": "Алхалтаар шатаасан калори"
-  },
-
   "history": "Түүх",
-  "@history": {
-    "description": "Алхалтын түүх харах хэсэг"
-  },
-
   "rewards": "Шагнал",
-  "@rewards": {
-    "description": "Алхалтаар авах боломжтой шагналууд"
-  },
-
   "profile": "Профайл",
-  "@profile": {
-    "description": "Хэрэглэгчийн профайл мэдээлэл"
-  },
-
   "logout": "Гарах",
-  "@logout": {
-    "description": "Системээс гарах товч"
-  },
-
   "save": "Хадгалах",
-  "@save": {
-    "description": "Өөрчлөлтийг хадгалах товч"
-  },
-
   "cancel": "Цуцлах",
-  "@cancel": {
-    "description": "Үйлдлийг цуцлах товч"
-  }
+
+  "pointsAvailable": "оноо байна",
+  "available": "Боломжтой",
+  "thisWeek": "Энэ долоо хоног",
+  "points": "Оноо",
+  "days": "Өдөр",
+  "editProfile": "Профайл засах",
+  "healthDetails": "Эрүүл мэндийн мэдээлэл",
+  "helpSupport": "Тусламж & Дэмжлэг",
+  "streak": "Идэвхтэй өдрүүд",
+  "todayPoints": "Өнөөдрийн оноо",
+  "keepWalking": "Алхсаар байгаарай!",
+  "moreSteps": "алхам хийвэл зорилгодоо хүрнэ!",
+  "goal": "Зорилго",
+  "dailyActivity": "Өдрийн идэвхжил",
+  "yourBalance": "ТАНЫ ОНОО",
+  "chooseLanguage": "Хэл сонгох",
+  "enableNotifications": "Мэдэгдэл асаах",
+  "appLanguage": "Аппын хэл",
+  "postpone": "Хойш болгох",
+  "openSettings": "Тохиргоо нээх",
+  "healthPermissionTitle": "Health Connect зөвшөөрөл",
+  "healthPermissionDesc": "Алхалтын мэдээлэл унших зөвшөөрөл шаардлагатай. Тохиргоо руу орж Health Connect-д зөвшөөрнө үү.",
+  "setDailyGoal": "Өдрийн зорилго тохируулах",
+  "enterSteps": "Алхам оруулна уу (жш: 10000)",
+  "steps": "алхам",
+  "time": "Хугацаа",
+  "saveChanges": "Өөрчлөлт хадгалах",
+  "changePhoto": "Зураг солих",
+  "updateHealthInfo": "Эрүүл мэндийн мэдээллээ шинэчлэх",
+  "calculatedStats": "Тооцоолсон үзүүлэлтүүд",
+  "weAreHereToHelp": "Бид танд туслахад бэлэн",
+  "faq": "Түгээмэл асуулт хариулт",
+  "howEarnPoints": "Оноо хэрхэн авах вэ?",
+  "howEarnPointsAnswer": "Алхаж, алхамаа бүртгүүлээрэй! Гар утасны WEARN аппаар 1000 алхам тутамд 1 оноо авна.",
+  "howRedeemRewards": "Шагналыг хэрхэн авах вэ?",
+  "howRedeemRewardsAnswer": "Шагнал хэсэгт орж, хүссэн шагналаа 'Авах' дарж авна уу.",
+  "canTransferPoints": "Онооны шилжүүлэг хийж болох уу?",
+  "canTransferPointsAnswer": "Одоогоор боломжгүй, гэхдээ удахгүй шинэчлэлтэд нэмэгдэх болно!"
 }
