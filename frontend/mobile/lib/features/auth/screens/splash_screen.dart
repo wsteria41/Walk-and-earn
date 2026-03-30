@@ -44,9 +44,9 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  Future<void> checkLogin() async {
+Future<void> checkLogin() async {
+    await Future.delayed(const Duration(milliseconds: 1500)); 
     String? token = await storage.read(key: "token");
-    await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
     if (token != null) {
@@ -54,12 +54,12 @@ class _SplashScreenState extends State<SplashScreen>
     } else {
       Navigator.pushReplacementNamed(context, "/auth");
     }
-  }
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ✅ Цэвэр хар фон
+
       backgroundColor: Colors.black,
       body: FadeTransition(
         opacity: _fadeAnimation,

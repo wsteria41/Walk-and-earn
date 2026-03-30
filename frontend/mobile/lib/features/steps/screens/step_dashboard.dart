@@ -34,17 +34,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   DateTime? _lastRefresh;
 
-  @override
-  void initState() {
-    super.initState();
+@override
+void initState() {
+  super.initState();
 
-    stepManager = StepManager();
-    stepManager.onStepUpdate = (value) {
-      if (!mounted) return;
-      setState(() => steps = value);
-      _refreshPoints();
-    };
+  stepManager = StepManager(); 
 
+  stepManager.onStepUpdate = (value) async {
+    if (!mounted) return;
+
+    await stepManager.syncSteps();
+    await loadData();
+  };
+
+  scheduler = StepSyncScheduler(stepManager);
+
+  loadData();
     scheduler = StepSyncScheduler(stepManager);
     loadData();
 
@@ -52,27 +57,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final granted = await stepManager.startTracking();
       if (!mounted) return;
       if (!granted) _showPermissionDialog();
+
+      await Future.delayed(const Duration(seconds: 2));
+
+      await stepManager.syncSteps();
+      // await loadData();
       scheduler.start();
     });
   }
 
-  Future<void> _refreshPoints() async {
-    if (steps == 0) return;
-    final now = DateTime.now();
-    if (_lastRefresh != null &&
-        now.difference(_lastRefresh!).inSeconds < 30) return;
-    _lastRefresh = now;
-    try {
-      final dashboard = await apiService.getDashboard();
-      if (!mounted) return;
-      setState(() {
-        totalPoints = dashboard["user"]?["totalPoints"] ?? totalPoints;
-        todayPoints = dashboard["todayPoints"] ?? todayPoints;
-      });
-    } catch (e) {
-      debugPrint("Points refresh error: $e");
-    }
+Future<void> _refreshPoints() async {
+  if (steps == 0) return;
+
+  final now = DateTime.now();
+
+  if (_lastRefresh != null &&
+      now.difference(_lastRefresh!).inSeconds < 30) return;
+
+  _lastRefresh = now;
+
+  try {
+    final dashboard = await apiService.getDashboard();
+
+    if (!mounted) return;
+
+    setState(() {
+      steps = dashboard["todaySteps"] ?? steps; 
+      totalPoints = dashboard["user"]?["totalPoints"] ?? totalPoints;
+      todayPoints = dashboard["todayPoints"] ?? todayPoints;
+    });
+
+  } catch (e) {
+    debugPrint("Points refresh error: $e");
   }
+}
 
   void _showPermissionDialog() {
     showDialog(
@@ -80,8 +98,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A2E),
-        title: const Text("Health Connect зөвшөөрөл",
-            style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Health Connect зөвшөөрөл",
+          style: TextStyle(color: Colors.white),
+        ),
         content: const Text(
           "Алхалтын мэдээлэл унших зөвшөөрөл шаардлагатай. "
           "Тохиргоо руу орж Health Connect-д зөвшөөрнө үү.",
@@ -90,14 +110,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Хойш болгох",
-                style: TextStyle(color: Colors.white38)),
+            child: const Text(
+              "Хойш болгох",
+              style: TextStyle(color: Colors.white38),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF8117CE),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () {
               openAppSettings();
@@ -126,6 +149,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         goal = dashboard["user"]?["dailyGoal"] ?? 10000;
         todayPoints = dashboard["todayPoints"] ?? 0;
         avatar = dashboard["user"]?["profile_photo"];
+        steps = dashboard["todaySteps"] ?? 0;
       });
     } catch (e) {
       debugPrint(e.toString());
@@ -148,8 +172,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A2E),
-        title: Text(l.setDailyGoal,
-            style: const TextStyle(color: Colors.white)),
+        title: Text(
+          l.setDailyGoal,
+          style: const TextStyle(color: Colors.white),
+        ),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
@@ -170,14 +196,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(l.cancel,
-                style: const TextStyle(color: Colors.white54)),
+            child: Text(
+              l.cancel,
+              style: const TextStyle(color: Colors.white54),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF8117CE),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: () async {
               int newGoal = int.tryParse(controller.text) ?? goal;
@@ -216,20 +245,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Hi",
-                        style: TextStyle(color: Colors.white70, fontSize: 15)),
-                    Text(name,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold)),
+                    const Text(
+                      "Hi",
+                      style: TextStyle(color: Colors.white70, fontSize: 15),
+                    ),
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 7),
+                        horizontal: 14,
+                        vertical: 7,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white12,
                         borderRadius: BorderRadius.circular(20),
@@ -237,14 +273,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.auto_awesome,
-                              color: Colors.white, size: 14),
+                          const Icon(
+                            Icons.auto_awesome,
+                            color: Colors.white,
+                            size: 14,
+                          ),
                           const SizedBox(width: 5),
-                          Text("$totalPoints pts",
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13)),
+                          Text(
+                            "$totalPoints pts",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -261,9 +303,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ? Text(
                                 name.isNotEmpty ? name[0].toUpperCase() : "U",
                                 style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16))
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              )
                             : null,
                       ),
                     ),
@@ -295,46 +339,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             strokeWidth: 12,
                             backgroundColor: const Color(0xFF2A2A3A),
                             valueColor: const AlwaysStoppedAnimation(
-                                Color(0xFF8117CE)),
+                              Color(0xFF8117CE),
+                            ),
                             strokeCap: StrokeCap.round,
                           ),
                         ),
                         Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(_formatSteps(steps),
-                                style: const TextStyle(
-                                    fontSize: 48,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                    letterSpacing: -1)),
-                            Text(l.steps,
-                                style: const TextStyle(
-                                    color: Colors.white54, fontSize: 14)),
+                            Text(
+                              steps.toString(),
+                              style: const TextStyle(
+                                fontSize: 48,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: -1,
+                              ),
+                            ),
+                            Text(
+                              l.steps,
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 14,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             GestureDetector(
                               onTap: changeGoal,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 5),
+                                  horizontal: 16,
+                                  vertical: 5,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF8117CE),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                    "${(progress * 100).toInt()}% of ${l.goal.toLowerCase()}",
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600)),
+                                  "${(progress * 100).toInt()}% of ${l.goal.toLowerCase()}",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
                             ),
                             const SizedBox(height: 6),
                             GestureDetector(
                               onTap: changeGoal,
-                              child: Text("${l.goal}: $goal",
-                                  style: const TextStyle(
-                                      color: Colors.white38, fontSize: 12)),
+                              child: Text(
+                                "${l.goal}: $goal",
+                                style: const TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -355,8 +415,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   childAspectRatio: 1.7,
                   children: [
                     _statTile(l.distance, "$distance km", Icons.route),
-                    _statTile(l.calories, "$calories kcal",
-                        Icons.local_fire_department),
+                    _statTile(
+                      l.calories,
+                      "$calories kcal",
+                      Icons.local_fire_department,
+                    ),
                     _statTile(l.time, timeWalked, Icons.timer),
                     _statTile(
                       l.todayPoints,
@@ -388,24 +451,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           color: Colors.white12,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.directions_walk,
-                            color: Colors.white, size: 22),
+                        child: const Icon(
+                          Icons.directions_walk,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(l.keepWalking,
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15)),
+                            Text(
+                              l.keepWalking,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
                             const SizedBox(height: 3),
                             Text(
-                                "${(goal - steps).clamp(0, goal)} ${l.moreSteps}",
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 12)),
+                              "${(goal - steps).clamp(0, goal)} ${l.moreSteps}",
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -438,17 +510,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title,
-              style: const TextStyle(color: Colors.white54, fontSize: 12)),
+          Text(
+            title,
+            style: const TextStyle(color: Colors.white54, fontSize: 12),
+          ),
           Row(
             children: [
               Icon(icon, color: const Color(0xFF8117CE), size: 18),
               const SizedBox(width: 6),
-              Text(value,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold)),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
         ],
@@ -483,30 +560,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
               GestureDetector(
                 onTap: () => setState(() => selectedIndex = 0),
                 child: BottomItem(
-                    icon: Icons.home,
-                    label: l.dashboard,
-                    isActive: selectedIndex == 0),
+                  icon: Icons.home,
+                  label: l.dashboard,
+                  isActive: selectedIndex == 0,
+                ),
               ),
               GestureDetector(
                 onTap: () => setState(() => selectedIndex = 1),
                 child: BottomItem(
-                    icon: Icons.card_giftcard,
-                    label: l.rewards,
-                    isActive: selectedIndex == 1),
+                  icon: Icons.card_giftcard,
+                  label: l.rewards,
+                  isActive: selectedIndex == 1,
+                ),
               ),
               GestureDetector(
                 onTap: () => setState(() => selectedIndex = 2),
                 child: BottomItem(
-                    icon: Icons.history,
-                    label: l.history,
-                    isActive: selectedIndex == 2),
+                  icon: Icons.history,
+                  label: l.history,
+                  isActive: selectedIndex == 2,
+                ),
               ),
               GestureDetector(
                 onTap: () => setState(() => selectedIndex = 3),
                 child: BottomItem(
-                    icon: Icons.person_outline,
-                    label: l.profile,
-                    isActive: selectedIndex == 3),
+                  icon: Icons.person_outline,
+                  label: l.profile,
+                  isActive: selectedIndex == 3,
+                ),
               ),
             ],
           ),
