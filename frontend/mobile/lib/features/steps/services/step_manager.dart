@@ -7,7 +7,7 @@ import 'step_permission.dart';
 import 'step_service.dart';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import '../../../services/notification_service.dart';
 
 class StepManager {
   final Health _health = Health();
@@ -17,9 +17,16 @@ class StepManager {
   Timer? _timer;
 
   int _currentSteps = 0;
-  int _lastSyncedSteps = 0;
 
   int get currentSteps => _currentSteps;
+  int _dailyGoal = 0;
+
+  int get dailyGoal => _dailyGoal;
+
+  void setDailyGoal(int goal) {
+    _dailyGoal = goal;
+    _log.i("Daily goal set: $_dailyGoal");
+  }
 
   Function(int)? onStepUpdate;
 
@@ -28,13 +35,14 @@ class StepManager {
       _timer?.cancel();
 
       final granted = await StepPermission.request();
-
       if (!granted) return false;
 
-      // restart хийсний дараах pending sync
       await _syncPendingIfOnline();
 
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      final goal = await _stepService.getDailyGoal();
+      setDailyGoal(goal);
+
+      _timer = Timer.periodic(const Duration(seconds: 30), (timer) async {
         await _readSteps();
       });
 

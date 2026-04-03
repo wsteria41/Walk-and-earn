@@ -4,10 +4,12 @@ import 'package:logger/logger.dart';
 
 class StepSyncScheduler {
   final StepManager manager;
-  final Logger _log = Logger();                    
+  final Logger _log = Logger();
 
   Timer? _timer;
   bool _isRunning = false;
+
+  Future<void> Function()? onAfterSync;
 
   StepSyncScheduler(this.manager);
 
@@ -23,6 +25,11 @@ class StepSyncScheduler {
     Future.delayed(const Duration(seconds: 15), () async {
       try {
         await manager.syncSteps();
+
+        if (onAfterSync != null) {
+          await onAfterSync!();
+        }
+
       } catch (e) {
         _log.e("INITIAL SYNC ERROR: $e");
       }
@@ -31,6 +38,11 @@ class StepSyncScheduler {
     _timer = Timer.periodic(const Duration(seconds: 60), (timer) async {
       try {
         await manager.syncSteps();
+
+        if (onAfterSync != null) {
+          await onAfterSync!();
+        }
+
       } catch (e) {
         _log.e("SYNC SCHEDULER ERROR: $e");
       }
@@ -39,7 +51,7 @@ class StepSyncScheduler {
 
   void stop() {
     _log.i("StepSyncScheduler stopped");
-    manager.stopTracking();
+
     _timer?.cancel();
     _timer = null;
     _isRunning = false;

@@ -32,65 +32,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int todayPoints = 0;
   int goal = 10000;
 
-  DateTime? _lastRefresh;
+  @override
+  void initState() {
+    super.initState();
 
-@override
-void initState() {
-  super.initState();
+    stepManager = StepManager();
 
-  stepManager = StepManager(); 
+    stepManager.onStepUpdate = (value) {
+      if (!mounted) return;
 
-  stepManager.onStepUpdate = (value) async {
-    if (!mounted) return;
+      setState(() {
+        steps = value;
+      });
+    };
 
-    await stepManager.syncSteps();
-    await loadData();
-  };
-
-  scheduler = StepSyncScheduler(stepManager);
-
-  loadData();
     scheduler = StepSyncScheduler(stepManager);
-    loadData();
+
+    scheduler.onAfterSync = () async {
+      await loadData();
+    };
+
+    Future.microtask(() => loadData());
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final granted = await stepManager.startTracking();
+
       if (!mounted) return;
       if (!granted) _showPermissionDialog();
 
-      await Future.delayed(const Duration(seconds: 2));
-
-      await stepManager.syncSteps();
-      // await loadData();
       scheduler.start();
     });
   }
-
-Future<void> _refreshPoints() async {
-  if (steps == 0) return;
-
-  final now = DateTime.now();
-
-  if (_lastRefresh != null &&
-      now.difference(_lastRefresh!).inSeconds < 30) return;
-
-  _lastRefresh = now;
-
-  try {
-    final dashboard = await apiService.getDashboard();
-
-    if (!mounted) return;
-
-    setState(() {
-      steps = dashboard["todaySteps"] ?? steps; 
-      totalPoints = dashboard["user"]?["totalPoints"] ?? totalPoints;
-      todayPoints = dashboard["todayPoints"] ?? todayPoints;
-    });
-
-  } catch (e) {
-    debugPrint("Points refresh error: $e");
-  }
-}
 
   void _showPermissionDialog() {
     showDialog(
@@ -143,6 +115,7 @@ Future<void> _refreshPoints() async {
   Future<void> loadData() async {
     try {
       var dashboard = await apiService.getDashboard();
+      if (!mounted) return;
       setState(() {
         name = dashboard["user"]?["name"] ?? "User";
         totalPoints = dashboard["user"]?["totalPoints"] ?? 0;

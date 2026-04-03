@@ -92,7 +92,7 @@ class _RewardDetailScreenState extends State<RewardDetailScreen> {
                               ? Icons.percent
                               : Icons.card_giftcard,
                           size: 80,
-                          color: const Color(0xFF7B2FFF).withOpacity(0.5),
+                          color: const Color(0xFF7B2FFF).withValues(alpha: 0.5),
                         ),
                       )
                     : null,
@@ -106,7 +106,7 @@ class _RewardDetailScreenState extends State<RewardDetailScreen> {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.8),
+                      Colors.black.withValues(alpha: 0.8),
                     ],
                   ),
                 ),
@@ -172,10 +172,10 @@ class _RewardDetailScreenState extends State<RewardDetailScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 7),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF7B2FFF).withOpacity(0.15),
+                          color: const Color(0xFF7B2FFF).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                              color: const Color(0xFF7B2FFF).withOpacity(0.4)),
+                              color: const Color(0xFF7B2FFF).withValues(alpha: 0.4)),
                         ),
                         child: Row(
                           children: [
@@ -199,11 +199,11 @@ class _RewardDetailScreenState extends State<RewardDetailScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 7),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1D9E75).withOpacity(0.15),
+                            color: const Color(0xFF1D9E75).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                                 color:
-                                    const Color(0xFF1D9E75).withOpacity(0.4)),
+                                    const Color(0xFF1D9E75).withValues(alpha: 0.4)),
                           ),
                           child: Text(
                             "$discount% хөнгөлөлт",

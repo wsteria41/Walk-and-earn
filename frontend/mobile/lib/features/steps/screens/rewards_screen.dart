@@ -147,7 +147,7 @@ class _RewardsScreenState extends State<RewardsScreen>
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Icon(
@@ -286,11 +286,11 @@ class _RewardsScreenState extends State<RewardsScreen>
                                   horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
                                 color:
-                                    const Color(0xFF1D9E75).withOpacity(0.2),
+                                    const Color(0xFF1D9E75).withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
                                     color: const Color(0xFF1D9E75)
-                                        .withOpacity(0.4)),
+                                        .withValues(alpha: 0.4)),
                               ),
                               child: Text("$discount% хөнгөлөлт",
                                   style: const TextStyle(
@@ -354,9 +354,9 @@ class _RewardsScreenState extends State<RewardsScreen>
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        color: (c["color"] as Color).withOpacity(0.15),
+        color: (c["color"] as Color).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: (c["color"] as Color).withOpacity(0.3)),
+        border: Border.all(color: (c["color"] as Color).withValues(alpha: 0.3)),
       ),
       child:
           Icon(c["icon"] as IconData, color: c["color"] as Color, size: 26),
@@ -429,9 +429,9 @@ class _RewardsScreenState extends State<RewardsScreen>
                 padding: const EdgeInsets.symmetric(
                     horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
+                  color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: statusColor.withOpacity(0.4)),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.4)),
                 ),
                 child: Text(status,
                     style: TextStyle(
