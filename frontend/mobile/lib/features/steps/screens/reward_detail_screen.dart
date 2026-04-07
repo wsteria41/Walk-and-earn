@@ -70,7 +70,7 @@ class _RewardDetailScreenState extends State<RewardDetailScreen> {
       backgroundColor: Colors.black,
       body: Column(
         children: [
-          // ── HERO IMAGE ──────────────────────────────
+          // ── HERO IMAGE
           Stack(
             children: [
               Container(
