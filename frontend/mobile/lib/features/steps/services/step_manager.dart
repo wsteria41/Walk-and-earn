@@ -43,6 +43,7 @@ class StepManager {
 
       _timer = Timer.periodic(const Duration(seconds: 30), (timer) async {
         await _readSteps();
+        await syncSteps();
       });
 
       return true;
@@ -86,58 +87,53 @@ class StepManager {
     }
   }
 
-Future<void> syncSteps() async {
-  try {
-    await _readSteps();
+  Future<void> syncSteps() async {
+    try {
+      await _readSteps();
 
-    if (_currentSteps == 0) {
-      _log.w("SYNC SKIPPED: 0 steps");
-      return;
-    }
-    final bool isOnline = await _hasInternet();
+      if (_currentSteps == 0) {
+        _log.w("SYNC SKIPPED: 0 steps");
+        return;
+      }
+      final bool isOnline = await _hasInternet();
 
-     if (!isOnline) {
-      await savePendingSteps(_currentSteps, 0, 0);
+      if (!isOnline) {
+        await savePendingSteps(_currentSteps, 0, 0);
 
-      _log.w("OFFLINE — хадгаллаа: $_currentSteps");
-      return;
-    }
+        _log.w("OFFLINE — хадгаллаа: $_currentSteps");
+        return;
+      }
 
-    LocationPermission permission =
-        await Geolocator.checkPermission();
+      LocationPermission permission = await Geolocator.checkPermission();
 
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
 
-    if (permission == LocationPermission.deniedForever ||
-        permission == LocationPermission.denied) {
-      _log.w("LOCATION PERMISSION DENIED → syncing without GPS");
+      if (permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.denied) {
+        _log.w("LOCATION PERMISSION DENIED → syncing without GPS");
+
+        await _stepService.syncSteps(_currentSteps, 0, 0);
+
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
 
       await _stepService.syncSteps(
         _currentSteps,
-        0,
-        0,
+        position.latitude,
+        position.longitude,
       );
 
-      return;
+      _log.i("SYNCED TOTAL: $_currentSteps");
+    } catch (e) {
+      _log.e("SYNC ERROR", error: e);
     }
-
-    final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    await _stepService.syncSteps(
-      _currentSteps,
-      position.latitude,
-      position.longitude,
-    );
-
-    _log.i("SYNCED TOTAL: $_currentSteps");
-  } catch (e) {
-    _log.e("SYNC ERROR", error: e);
   }
-}
 
   Future<void> _syncPendingIfOnline() async {
     try {
