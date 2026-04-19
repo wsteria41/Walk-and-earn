@@ -257,13 +257,19 @@ async function getHistory(userId, days = 7) {
   const [rows] = await pool.query(
     `SELECT 
         DATE(recorded_at) AS date,
-        SUM(delta_steps) AS steps,
-        FLOOR(SUM(CASE WHEN suspicious_flag = 0 THEN delta_steps ELSE 0 END) / 1000) AS points
+        MAX(total_steps) AS steps,
+        FLOOR(SUM(
+          CASE 
+            WHEN suspicious_flag = 0 
+            THEN delta_steps 
+            ELSE 0 
+          END
+        ) / 1000) AS points
      FROM step_records
      WHERE user_id = ?
+     AND recorded_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
      GROUP BY DATE(recorded_at)
-     ORDER BY date DESC
-     LIMIT ?`,
+     ORDER BY date DESC`,
     [userId, days]
   );
 
@@ -275,18 +281,35 @@ async function getHistory(userId, days = 7) {
 
 async function getDailySummary(userId) {
 
-  const [rows] = await pool.query(
-    `SELECT 
-        SUM(delta_steps) as total_steps_today,
-        SUM(CASE WHEN suspicious_flag = 0 THEN delta_steps ELSE 0 END) as valid_steps_today
+  const [stepRows] = await pool.query(
+    `SELECT total_steps
+     FROM step_records
+     WHERE user_id = ?
+     AND DATE(recorded_at) = CURDATE()
+     ORDER BY recorded_at DESC
+     LIMIT 1`,
+    [userId]
+  );
+
+  const totalSteps =
+    stepRows.length > 0
+      ? Number(stepRows[0].total_steps)
+      : 0;
+
+
+  const [validRows] = await pool.query(
+    `SELECT IFNULL(SUM(
+        CASE WHEN suspicious_flag = 0
+        THEN delta_steps
+        ELSE 0 END
+     ),0) AS valid_steps_today
      FROM step_records
      WHERE user_id = ?
      AND DATE(recorded_at) = CURDATE()`,
     [userId]
   );
 
-  const totalSteps = rows[0].total_steps_today || 0;
-  const validSteps = rows[0].valid_steps_today || 0;
+  const validSteps = Number(validRows[0].valid_steps_today);
 
   const pointsToday = Math.floor(validSteps / 1000);
 

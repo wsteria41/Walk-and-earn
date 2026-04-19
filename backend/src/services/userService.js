@@ -78,7 +78,7 @@ async function getDailyStats(userId, days = 7) {
   const [rows] = await pool.query(
     `SELECT 
        DATE(recorded_at) AS date,
-       SUM(delta_steps) AS steps,
+       MAX(delta_steps) AS steps,
        FLOOR(SUM(CASE WHEN suspicious_flag = 0 THEN delta_steps ELSE 0 END) / 1000) AS points
      FROM step_records
      WHERE user_id = ?
@@ -123,12 +123,19 @@ async function getUserDashboard(userId) {
   const user = userRows[0];
 
   const [todayRows] = await pool.query(
-    `SELECT IFNULL(SUM(delta_steps), 0) AS today_steps
-     FROM step_records
-     WHERE user_id = ? AND DATE(recorded_at) = CURDATE()`,
+    `SELECT total_steps
+    FROM step_records
+    WHERE user_id = ?
+    AND DATE(recorded_at) = CURDATE()
+    ORDER BY recorded_at DESC
+    LIMIT 1`,
     [userId]
   );
-  const todaySteps = Number(todayRows[0].today_steps);
+
+  const todaySteps =
+    todayRows.length > 0
+      ? Number(todayRows[0].total_steps)
+      : 0;
 
   const [weeklyRows] = await pool.query(
     `SELECT IFNULL(SUM(delta_steps), 0) AS weekly_steps
