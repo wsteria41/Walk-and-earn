@@ -58,8 +58,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final granted = await stepManager.startTracking();
 
       if (!mounted) return;
-      if (!granted) _showPermissionDialog();
-
+      if (!granted) {
+        _showPermissionDialog();
+        return;
+      }
       scheduler.start();
     });
   }

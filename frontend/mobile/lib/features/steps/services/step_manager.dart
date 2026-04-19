@@ -42,7 +42,7 @@ class StepManager {
       setDailyGoal(goal);
 
       _timer = Timer.periodic(const Duration(seconds: 30), (timer) async {
-        await syncSteps();
+        await _readSteps();
       });
 
       return true;
