@@ -81,11 +81,15 @@ class _HealthDetailsScreenState extends State<HealthDetailsScreen> {
   void calculateBMI() {
     if (heightController.text.isEmpty || weightController.text.isEmpty) return;
 
-    double height = double.parse(heightController.text) / 100;
-    double weight = double.parse(weightController.text);
+    double height = double.tryParse(heightController.text) ?? 0;
+
+    double weight = double.tryParse(weightController.text) ?? 0;
+
+    if (height <= 0 || weight <= 0) return;
+
+    height = height / 100;
 
     double result = weight / (height * height);
-    if (!mounted) return;
 
     setState(() {
       bmi = result.toStringAsFixed(1);
@@ -323,10 +327,11 @@ class _HealthDetailsScreenState extends State<HealthDetailsScreen> {
         elevation: 0,
         title: const Text(
           "Health Details",
-          style: TextStyle(color: Colors.white,
-          fontSize: 24,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
           ),
         ),
       ),

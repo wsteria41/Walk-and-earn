@@ -117,7 +117,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       var dashboard = await apiService.getDashboard();
       if (!mounted) return;
       setState(() {
-        name = dashboard["user"]?["name"] ?? "User";
+        name =
+            (dashboard["user"]?["name"]?.toString().trim().isNotEmpty ?? false)
+            ? dashboard["user"]["name"]
+            : "User";
+
         totalPoints = dashboard["user"]?["totalPoints"] ?? 0;
         goal = dashboard["user"]?["dailyGoal"] ?? 10000;
         todayPoints = dashboard["todayPoints"] ?? 0;
@@ -465,11 +469,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
-  }
-
-  String _formatSteps(int s) {
-    if (s >= 1000) return "${(s / 1000).toStringAsFixed(1)}k";
-    return s.toString();
   }
 
   Widget _statTile(String title, String value, IconData icon) {

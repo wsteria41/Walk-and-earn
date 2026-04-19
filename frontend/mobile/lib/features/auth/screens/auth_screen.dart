@@ -2,8 +2,7 @@ import '../services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:health/health.dart';
-import 'package:permission_handler/permission_handler.dart';
+
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});

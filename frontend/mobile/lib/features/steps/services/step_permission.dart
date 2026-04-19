@@ -44,6 +44,12 @@ class StepPermission {
       final health = Health();
       await health.configure();
 
+      final hasPermission = await health.hasPermissions(
+        [HealthDataType.STEPS],
+        permissions: [HealthDataAccess.READ],
+      );
+      if (hasPermission == true) return true;
+
       final granted = await health.requestAuthorization(
         [HealthDataType.STEPS],
         permissions: [HealthDataAccess.READ],

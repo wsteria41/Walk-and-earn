@@ -26,14 +26,11 @@ class AuthService {
       log.i("LOGIN STATUS: ${response.statusCode}");
 
       if (response.statusCode == 200) {
-
         final data = jsonDecode(response.body);
         final token = data["token"];
 
         if (token != null) {
-
           await storage.saveToken(token);
-
           log.i("TOKEN SAVED");
 
           return true;
@@ -41,13 +38,11 @@ class AuthService {
       }
 
       log.w("LOGIN FAILED");
-
       return false;
 
     } catch (e) {
-
       log.e("LOGIN ERROR", error: e);
-
+      
       return false;
 
     }

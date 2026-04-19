@@ -23,7 +23,6 @@ async function register(name, email, password) {
     throw new Error("Email already registered");
   }
 
-
   const hashedPassword = await bcrypt.hash(password, 10);
 
   await pool.query(
@@ -56,14 +55,13 @@ async function login(email, password) {
   }
 
   const user = rows[0];
-
   const validPassword = await bcrypt.compare(password, user.password_hash);
 
   if (!validPassword) {
     throw new Error("Invalid email or password");
   }
 
-  // JWT token үүсгэх
+  // JWT token uusgeh
   const token = jwt.sign(
     {
       id: user.id,
@@ -104,7 +102,7 @@ async function registerMerchant(name, email, password) {
       [name, email, hashed]
     );
 
-    // ← business_name болон contact_email нэмэх
+    // business_name bolon contact_email nemeh
     await connection.query(
       `INSERT INTO merchants (user_id, business_name, contact_email) VALUES (?, ?, ?)`,
       [result.insertId, name, email]

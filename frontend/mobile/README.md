@@ -1,7 +1,12 @@
-# mobile
+# Mobile
 
-A new Flutter project.
+Walk and Earn mobail app
+Энэхүү систем нь дипломын ажлын сэдэв бөгөөд 'Алхаад урамшуулал авах гар утасны апп' нэртэйгээр хөгжүүлэгдэж байгаа болно. Хэрэглэгчдэд 
+зориулсан гар утасны аппликейшн болон админ/мерчант хандах боломжтой вэб дашбоард онлайн орчинд 24/7  https://wearn.me url дээр ажиллаж байна.  
 
+Тухай:
+- Сервэр болон өгөгдлийн санг Digital Ocean ий droplet болон managed database дээр тус тус тавьсан бөгөөд энэ нь системин үйл ажиллагааны тасралтгүй, найдвартай байдлыг хангаж байна.
+- Deployment CI/CD pipeline, Github Action, SSH server 
 ## Getting Started
 
 This project is a starting point for a Flutter application.

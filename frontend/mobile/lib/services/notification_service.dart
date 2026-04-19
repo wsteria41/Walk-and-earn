@@ -16,9 +16,16 @@ static Future<void> init() async {
     settings: const InitializationSettings(android: android, iOS: ios),
   );
 
-  final token = await _fcm.getToken();
-  debugPrint("FCM Token: $token");
-
+  try {
+    final apnsToken = await _fcm.getAPNSToken();
+    if (apnsToken != null) {
+      final token = await _fcm.getToken();
+      debugPrint("FCM Token: $token");
+    }
+  } catch (e) {
+    debugPrint("FCM Token error: $e");
+  }
+  
   FirebaseMessaging.onMessage.listen((message) {
     _showLocalNotification(message);
   });

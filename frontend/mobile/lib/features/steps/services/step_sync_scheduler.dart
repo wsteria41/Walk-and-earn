@@ -7,6 +7,7 @@ class StepSyncScheduler {
   final Logger _log = Logger();
 
   Timer? _timer;
+  Timer? _initialTimer; 
   bool _isRunning = false;
 
   Future<void> Function()? onAfterSync;
@@ -22,14 +23,10 @@ class StepSyncScheduler {
     _log.i("StepSyncScheduler started");
     _isRunning = true;
 
-    Future.delayed(const Duration(seconds: 15), () async {
+    _initialTimer = Timer(const Duration(seconds: 15), () async {
       try {
         await manager.syncSteps();
-
-        if (onAfterSync != null) {
-          await onAfterSync!();
-        }
-
+        if (onAfterSync != null) await onAfterSync!();
       } catch (e) {
         _log.e("INITIAL SYNC ERROR: $e");
       }
@@ -38,11 +35,7 @@ class StepSyncScheduler {
     _timer = Timer.periodic(const Duration(seconds: 60), (timer) async {
       try {
         await manager.syncSteps();
-
-        if (onAfterSync != null) {
-          await onAfterSync!();
-        }
-
+        if (onAfterSync != null) await onAfterSync!();
       } catch (e) {
         _log.e("SYNC SCHEDULER ERROR: $e");
       }
@@ -52,6 +45,8 @@ class StepSyncScheduler {
   void stop() {
     _log.i("StepSyncScheduler stopped");
 
+    _initialTimer?.cancel(); 
+    _initialTimer = null;    
     _timer?.cancel();
     _timer = null;
     _isRunning = false;

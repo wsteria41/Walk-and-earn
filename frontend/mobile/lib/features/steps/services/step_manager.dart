@@ -7,7 +7,6 @@ import 'step_permission.dart';
 import 'step_service.dart';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../services/notification_service.dart';
 
 class StepManager {
   final Health _health = Health();
@@ -43,7 +42,7 @@ class StepManager {
       setDailyGoal(goal);
 
       _timer = Timer.periodic(const Duration(seconds: 30), (timer) async {
-        await _readSteps();
+        await syncSteps();
       });
 
       return true;
@@ -87,57 +86,58 @@ class StepManager {
     }
   }
 
-  Future<void> syncSteps() async {
-    try {
-      await _readSteps();
+Future<void> syncSteps() async {
+  try {
+    await _readSteps();
 
-      if (_currentSteps == 0) {
-        _log.w("SYNC SKIPPED: 0 steps");
-        return;
-      }
+    if (_currentSteps == 0) {
+      _log.w("SYNC SKIPPED: 0 steps");
+      return;
+    }
+    final bool isOnline = await _hasInternet();
 
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+     if (!isOnline) {
+      await savePendingSteps(_currentSteps, 0, 0);
 
-      final isOnline = await _hasInternet();
+      _log.w("OFFLINE — хадгаллаа: $_currentSteps");
+      return;
+    }
 
-      if (!isOnline) {
-        await savePendingSteps(
-          _currentSteps,
-          position.latitude,
-          position.longitude,
-        );
+    LocationPermission permission =
+        await Geolocator.checkPermission();
 
-        _log.w("OFFLINE — хадгаллаа");
-        return;
-      }
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
 
-      final pending = await getPendingSteps();
-
-      if (pending["steps"] > 0) {
-        await _stepService.syncSteps(
-          pending["steps"],
-          pending["lat"],
-          pending["lng"],
-        );
-
-        await clearPendingSteps();
-
-        _log.i("PENDING SYNC DONE");
-      }
+    if (permission == LocationPermission.deniedForever ||
+        permission == LocationPermission.denied) {
+      _log.w("LOCATION PERMISSION DENIED → syncing without GPS");
 
       await _stepService.syncSteps(
         _currentSteps,
-        position.latitude,
-        position.longitude,
+        0,
+        0,
       );
 
-      _log.i("SYNCED TOTAL: $_currentSteps");
-    } catch (e) {
-      _log.e("SYNC ERROR", error: e);
+      return;
     }
+
+    final position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    await _stepService.syncSteps(
+      _currentSteps,
+      position.latitude,
+      position.longitude,
+    );
+
+    _log.i("SYNCED TOTAL: $_currentSteps");
+  } catch (e) {
+    _log.e("SYNC ERROR", error: e);
   }
+}
 
   Future<void> _syncPendingIfOnline() async {
     try {
