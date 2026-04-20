@@ -258,13 +258,7 @@ async function getHistory(userId, days = 7) {
     `SELECT 
         DATE(recorded_at) AS date,
         MAX(total_steps) AS steps,
-        FLOOR(SUM(
-          CASE 
-            WHEN suspicious_flag = 0 
-            THEN delta_steps 
-            ELSE 0 
-          END
-        ) / 1000) AS points
+        FLOOR(MAX(total_steps) / 1000) AS points
      FROM step_records
      WHERE user_id = ?
      AND recorded_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)

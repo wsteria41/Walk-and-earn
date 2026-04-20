@@ -78,7 +78,7 @@ async function getDailyStats(userId, days = 7) {
   const [rows] = await pool.query(
     `SELECT 
        DATE(recorded_at) AS date,
-       MAX(delta_steps) AS steps,
+       SUM(delta_steps) AS steps,
        FLOOR(SUM(CASE WHEN suspicious_flag = 0 THEN delta_steps ELSE 0 END) / 1000) AS points
      FROM step_records
      WHERE user_id = ?
@@ -137,6 +137,8 @@ async function getUserDashboard(userId) {
       ? Number(todayRows[0].total_steps)
       : 0;
 
+  const todayPoints = Math.floor(todaySteps / 1000);
+
   const [weeklyRows] = await pool.query(
     `SELECT IFNULL(SUM(delta_steps), 0) AS weekly_steps
      FROM step_records
@@ -153,7 +155,7 @@ async function getUserDashboard(userId) {
      WHERE user_id = ?
        AND DATE(recorded_at) = CURDATE()
        AND suspicious_flag = 0`,
-    [userId]
+    [userId]  
   );
   const todayPoints = Math.floor(Number(ptRows[0].valid_steps) / 1000);
 
@@ -215,17 +217,36 @@ async function updateHealth(userId, age, height, weight, birth_year) {
   );
 }
 
+
 async function getTotalStats(userId) {
-  const [rows] = await pool.query(
-    `SELECT 
-       IFNULL(SUM(delta_steps), 0) AS totalSteps,
-       FLOOR(IFNULL(SUM(CASE WHEN suspicious_flag = 0 THEN delta_steps ELSE 0 END), 0) / 1000) AS rewards,
-       COUNT(DISTINCT DATE(recorded_at)) AS activeDays
+
+  const [[steps]] = await pool.query(
+    `SELECT IFNULL(SUM(delta_steps), 0) AS totalSteps
      FROM step_records
      WHERE user_id = ?`,
     [userId]
   );
-  return rows[0];
+
+  const [[rewards]] = await pool.query(
+    `SELECT COUNT(*) AS rewards
+     FROM redeem_transactions
+     WHERE user_id = ?
+     AND status = 'APPROVED'`,
+    [userId]
+  );
+
+  const [[activeDays]] = await pool.query(
+    `SELECT COUNT(DISTINCT DATE(recorded_at)) AS activeDays
+     FROM step_records
+     WHERE user_id = ?`,
+    [userId]
+  );
+
+  return {
+    totalSteps: steps.totalSteps || 0,
+    rewards: rewards.rewards || 0,
+    activeDays: activeDays.activeDays || 0
+  };
 }
 
 async function updateProfilePhoto(userId, photoUrl) {
