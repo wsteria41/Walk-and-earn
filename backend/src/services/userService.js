@@ -34,26 +34,9 @@ async function getWeeklyLeaderboard() {
         u.id,
         u.name,
         u.email,
-        SUM(
-  CASE WHEN sr.suspicious_flag = 0
-  THEN sr.delta_steps
-  ELSE 0 END
-) AS weekly_steps,
-        FLOOR(
-  SUM(
-    CASE WHEN sr.suspicious_flag = 0
-    THEN sr.delta_steps
-    ELSE 0 END
-  ) / 1000
-) AS weekly_points,
-        RANK() OVER (
-  ORDER BY
-  SUM(
-    CASE WHEN sr.suspicious_flag = 0
-    THEN sr.delta_steps
-    ELSE 0 END
-  ) DESC
-) AS rank_position
+        SUM(sr.delta_steps) AS weekly_steps,
+        FLOOR(SUM(sr.delta_steps) / 1000) AS weekly_points,
+        RANK() OVER (ORDER BY SUM(sr.delta_steps) DESC) AS rank_position
       FROM users u
       JOIN step_records sr ON u.id = sr.user_id
       WHERE sr.recorded_at >= CURDATE() - INTERVAL 7 DAY
@@ -139,33 +122,24 @@ async function getUserDashboard(userId) {
   if (!userRows.length) throw new Error("User not found");
   const user = userRows[0];
 
-const [todayRows] = await pool.query(
-  `SELECT IFNULL(SUM(delta_steps),0) AS today_steps
-   FROM step_records
-   WHERE user_id = ?
-   AND DATE(recorded_at) = CURDATE()`,
-  [userId]
-);
+  const [todayRows] = await pool.query(
+    `SELECT total_steps
+     FROM step_records
+     WHERE user_id = ?
+     AND DATE(recorded_at) = CURDATE()
+     ORDER BY recorded_at DESC
+     LIMIT 1`,
+    [userId]
+  );
 
-const todaySteps = Number(todayRows[0].today_steps);
+  const todaySteps =
+    todayRows.length > 0
+      ? Number(todayRows[0].total_steps)
+      : 0;
 
-const [todayPointsRows] = await pool.query(
-  `SELECT FLOOR(
-      SUM(
-        CASE WHEN suspicious_flag = 0
-        THEN delta_steps
-        ELSE 0 END
-      ) / 1000
-    ) AS today_points
-   FROM step_records
-   WHERE user_id = ?
-   AND DATE(recorded_at) = CURDATE()`,
-  [userId]
-);
+  const todayPoints = Math.floor(todaySteps / 1000);
 
-const todayPoints = Number(todayPointsRows[0].today_points || 0);
-
-const [totalPointsRows] = await pool.query(
+  const [totalPointsRows] = await pool.query(
   `SELECT FLOOR(
       SUM(
         CASE WHEN suspicious_flag = 0
