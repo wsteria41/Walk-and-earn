@@ -78,7 +78,7 @@ async function getDailyStats(userId, days = 7) {
   const [rows] = await pool.query(
     `SELECT 
        DATE(recorded_at) AS date,
-       SUM(delta_steps) AS steps,
+       MAX(delta_steps) AS steps,
        FLOOR(SUM(CASE WHEN suspicious_flag = 0 THEN delta_steps ELSE 0 END) / 1000) AS points
      FROM step_records
      WHERE user_id = ?
@@ -122,6 +122,8 @@ async function getUserDashboard(userId) {
   if (!userRows.length) throw new Error("User not found");
   const user = userRows[0];
 
+
+  // today steps
   const [todayRows] = await pool.query(
     `SELECT total_steps
      FROM step_records
@@ -139,20 +141,7 @@ async function getUserDashboard(userId) {
 
   const todayPoints = Math.floor(todaySteps / 1000);
 
-  const [totalPointsRows] = await pool.query(
-  `SELECT FLOOR(
-      SUM(
-        CASE WHEN suspicious_flag = 0
-        THEN delta_steps
-        ELSE 0 END
-      ) / 1000
-    ) AS total_points
-   FROM step_records
-   WHERE user_id = ?`,
-  [userId]
-);
 
-const totalPoints = Number(totalPointsRows[0].total_points || 0);
   // weekly steps
   const [weeklyRows] = await pool.query(
     `SELECT IFNULL(SUM(delta_steps), 0) AS weekly_steps
@@ -183,8 +172,8 @@ const totalPoints = Number(totalPointsRows[0].total_points || 0);
       id: user.id,
       name: user.name,
       email: user.email,
-      totalPoints: totalPoints,
-      level: calculateLevel(totalPoints),
+      totalPoints: user.total_points,
+      level: calculateLevel(user.total_points),
       dailyGoal: user.daily_goal,
       profile_photo: user.profile_photo
     },
