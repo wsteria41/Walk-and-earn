@@ -112,8 +112,6 @@ async function getDailyStats(userId, days = 7) {
   return { dailyStats: result };
 }
 
-const { getDailySummary } = require("./walkService");
-
 async function getUserDashboard(userId) {
 
   const [userRows] = await pool.query(
@@ -127,12 +125,34 @@ async function getUserDashboard(userId) {
   const user = userRows[0];
 
 
-  // history screen-тэй яг адил today summary ашиглана
-  const todaySummary = await getDailySummary(userId);
+  // today total_steps (counter)
+  const [todayRows] = await pool.query(
+    `SELECT total_steps
+     FROM step_records
+     WHERE user_id = ?
+     AND recorded_at >= CURDATE()
+     ORDER BY recorded_at DESC
+     LIMIT 1`,
+    [userId]
+  );
 
-  const todaySteps = todaySummary.totalStepsToday;
-  const todayPoints = todaySummary.pointsToday;
+  const todaySteps =
+    todayRows.length > 0
+      ? Number(todayRows[0].total_steps)
+      : 0;
 
+
+  // today valid steps (delta sum)
+const [todayRowsForPoints] = await pool.query(
+  `SELECT IFNULL(MAX(total_steps),0) AS today_steps
+   FROM step_records
+   WHERE user_id = ?
+   AND DATE(recorded_at) = CURDATE()`,
+  [userId]
+);
+
+const todayPoints =
+  Math.floor(todayRowsForPoints[0].today_steps / 1000);
 
   // weekly steps (valid only)
   const [weeklyRows] = await pool.query(
@@ -145,7 +165,7 @@ async function getUserDashboard(userId) {
      ),0) AS weekly_steps
      FROM step_records
      WHERE user_id = ?
-     AND recorded_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
+     AND recorded_at >= CURDATE() - INTERVAL 7 DAY`,
     [userId]
   );
 
@@ -158,7 +178,7 @@ async function getUserDashboard(userId) {
     `SELECT COUNT(*) AS suspicious_count
      FROM step_records
      WHERE user_id = ?
-     AND DATE(recorded_at) = CURDATE()
+     AND recorded_at >= CURDATE()
      AND suspicious_flag = 1`,
     [userId]
   );
@@ -172,14 +192,14 @@ async function getUserDashboard(userId) {
       id: user.id,
       name: user.name,
       email: user.email,
-      totalPoints: user.total_points,
+      totalPoints: user.total_points, // ← энэ чинь total lifetime points
       level: calculateLevel(user.total_points),
       dailyGoal: user.daily_goal,
       profile_photo: user.profile_photo
     },
-    todaySteps,
-    weeklySteps,
-    todayPoints,
+    todaySteps,     // counter value
+    weeklySteps,    // valid weekly steps
+    todayPoints,    // зөв өнөөдрийн point
     hasSuspicious
   };
 
