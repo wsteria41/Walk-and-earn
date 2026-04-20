@@ -147,6 +147,7 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
       `SELECT delta_steps
        FROM step_records
        WHERE user_id = ?
+       AND delta_steps > 0
        ORDER BY recorded_at DESC
        LIMIT 10`,
       [userId]
