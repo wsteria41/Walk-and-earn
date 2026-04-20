@@ -112,6 +112,8 @@ async function getDailyStats(userId, days = 7) {
   return { dailyStats: result };
 }
 
+const { getDailySummary } = require("./walkservice");
+
 async function getUserDashboard(userId) {
 
   const [userRows] = await pool.query(
@@ -125,43 +127,11 @@ async function getUserDashboard(userId) {
   const user = userRows[0];
 
 
-  // today total_steps (counter)
-  const [todayRows] = await pool.query(
-    `SELECT total_steps
-     FROM step_records
-     WHERE user_id = ?
-     AND recorded_at >= CURDATE()
-     ORDER BY recorded_at DESC
-     LIMIT 1`,
-    [userId]
-  );
+  // history screen-тэй яг адил today summary ашиглана
+  const todaySummary = await getDailySummary(userId);
 
-  const todaySteps =
-    todayRows.length > 0
-      ? Number(todayRows[0].total_steps)
-      : 0;
-
-
-  // today valid steps (delta sum)
-  const [todayValidRows] = await pool.query(
-    `SELECT IFNULL(SUM(
-        CASE
-          WHEN suspicious_flag = 0
-          THEN delta_steps
-          ELSE 0
-        END
-     ),0) AS valid_steps_today
-     FROM step_records
-     WHERE user_id = ?
-     AND recorded_at >= CURDATE()`,
-    [userId]
-  );
-
-  const validStepsToday =
-    Number(todayValidRows[0].valid_steps_today);
-
-
-  const todayPoints = Math.floor(validStepsToday / 1000);
+  const todaySteps = todaySummary.totalStepsToday;
+  const todayPoints = todaySummary.pointsToday;
 
 
   // weekly steps (valid only)
@@ -175,7 +145,7 @@ async function getUserDashboard(userId) {
      ),0) AS weekly_steps
      FROM step_records
      WHERE user_id = ?
-     AND recorded_at >= CURDATE() - INTERVAL 7 DAY`,
+     AND recorded_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
     [userId]
   );
 
@@ -188,7 +158,7 @@ async function getUserDashboard(userId) {
     `SELECT COUNT(*) AS suspicious_count
      FROM step_records
      WHERE user_id = ?
-     AND recorded_at >= CURDATE()
+     AND DATE(recorded_at) = CURDATE()
      AND suspicious_flag = 1`,
     [userId]
   );
@@ -202,14 +172,14 @@ async function getUserDashboard(userId) {
       id: user.id,
       name: user.name,
       email: user.email,
-      totalPoints: user.total_points, // ← энэ чинь total lifetime points
+      totalPoints: user.total_points,
       level: calculateLevel(user.total_points),
       dailyGoal: user.daily_goal,
       profile_photo: user.profile_photo
     },
-    todaySteps,     // counter value
-    weeklySteps,    // valid weekly steps
-    todayPoints,    // зөв өнөөдрийн point
+    todaySteps,
+    weeklySteps,
+    todayPoints,
     hasSuspicious
   };
 
