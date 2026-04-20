@@ -20,8 +20,16 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values,
+    );
+
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+      ),
     );
 
     _fadeController = AnimationController(
@@ -61,19 +69,20 @@ Future<void> checkLogin() async {
     return Scaffold(
 
       backgroundColor: Colors.black,
-      body: FadeTransition(
+      body: SafeArea(
+        child: FadeTransition(
         opacity: _fadeAnimation,
-        child: Center(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 120),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              // ✅ "WEARN" — цагаан → ягаан gradient
               ShaderMask(
                 shaderCallback: (bounds) => const LinearGradient(
                   colors: [
                     Colors.white,
                     Color(0xFFD4B4FF),
-                    Color(0xFFB56DFF),
+                    Color.fromARGB(255, 139, 76, 202),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -104,6 +113,7 @@ Future<void> checkLogin() async {
             ],
           ),
         ),
+      ),
       ),
     );
   }

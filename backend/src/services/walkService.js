@@ -94,6 +94,7 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
     if (dailyTotal > 40000) {
       suspicious = 1;
       reason = "Daily step limit exceeded";
+      delta = 0;
     }
 
     // SPEED DETECTION
