@@ -112,7 +112,7 @@ async function getDailyStats(userId, days = 7) {
   return { dailyStats: result };
 }
 
-const { getDailySummary } = require("./walkservice");
+const { getDailySummary } = require("./walkService");
 
 async function getUserDashboard(userId) {
 
