@@ -111,8 +111,8 @@ async function getDailyStats(userId, days = 7) {
 
   return { dailyStats: result };
 }
-
 async function getUserDashboard(userId) {
+
   const [userRows] = await pool.query(
     `SELECT id, name, email, total_points, daily_goal, profile_photo
      FROM users WHERE id = ?`,
@@ -124,11 +124,11 @@ async function getUserDashboard(userId) {
 
   const [todayRows] = await pool.query(
     `SELECT total_steps
-    FROM step_records
-    WHERE user_id = ?
-    AND DATE(recorded_at) = CURDATE()
-    ORDER BY recorded_at DESC
-    LIMIT 1`,
+     FROM step_records
+     WHERE user_id = ?
+     AND DATE(recorded_at) = CURDATE()
+     ORDER BY recorded_at DESC
+     LIMIT 1`,
     [userId]
   );
 
@@ -139,25 +139,30 @@ async function getUserDashboard(userId) {
 
   const todayPoints = Math.floor(todaySteps / 1000);
 
+  // weekly steps
   const [weeklyRows] = await pool.query(
     `SELECT IFNULL(SUM(delta_steps), 0) AS weekly_steps
      FROM step_records
      WHERE user_id = ?
-       AND recorded_at >= CURDATE() - INTERVAL 7 DAY`,
+     AND recorded_at >= CURDATE() - INTERVAL 7 DAY`,
     [userId]
   );
+
   const weeklySteps = Number(weeklyRows[0].weekly_steps);
 
-  // suspicius alhmiig hasna
-  const [ptRows] = await pool.query(
-    `SELECT IFNULL(SUM(delta_steps), 0) AS valid_steps
+
+  // suspicious activity
+  const [suspiciousRows] = await pool.query(
+    `SELECT COUNT(*) AS suspicious_count
      FROM step_records
      WHERE user_id = ?
-       AND DATE(recorded_at) = CURDATE()
-       AND suspicious_flag = 0`,
-    [userId]  
+     AND DATE(recorded_at) = CURDATE()
+     AND suspicious_flag = 1`,
+    [userId]
   );
-  const todayPoints = Math.floor(Number(ptRows[0].valid_steps) / 1000);
+
+  const hasSuspicious = suspiciousRows[0].suspicious_count > 0;
+
 
   return {
     user: {
@@ -165,14 +170,16 @@ async function getUserDashboard(userId) {
       name: user.name,
       email: user.email,
       totalPoints: user.total_points,
-      level: calculateLevel(user.total_points), 
+      level: calculateLevel(user.total_points),
       dailyGoal: user.daily_goal,
       profile_photo: user.profile_photo
     },
     todaySteps,
     weeklySteps,
-    todayPoints
+    todayPoints,
+    hasSuspicious
   };
+
 }
 
 async function updateGoal(userId, goal) {
