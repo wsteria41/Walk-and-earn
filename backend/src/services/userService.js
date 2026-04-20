@@ -78,7 +78,7 @@ async function getDailyStats(userId, days = 7) {
   const [rows] = await pool.query(
     `SELECT 
        DATE(recorded_at) AS date,
-       MAX(delta_steps) AS steps,
+       SUM(delta_steps) AS steps,
        FLOOR(SUM(CASE WHEN suspicious_flag = 0 THEN delta_steps ELSE 0 END) / 1000) AS points
      FROM step_records
      WHERE user_id = ?
@@ -111,6 +111,7 @@ async function getDailyStats(userId, days = 7) {
 
   return { dailyStats: result };
 }
+
 async function getUserDashboard(userId) {
 
   const [userRows] = await pool.query(
@@ -120,10 +121,11 @@ async function getUserDashboard(userId) {
   );
 
   if (!userRows.length) throw new Error("User not found");
+
   const user = userRows[0];
 
 
-  // today steps
+  // today total_steps (counter)
   const [todayRows] = await pool.query(
     `SELECT total_steps
      FROM step_records
@@ -139,22 +141,49 @@ async function getUserDashboard(userId) {
       ? Number(todayRows[0].total_steps)
       : 0;
 
-  const todayPoints = Math.floor(todaySteps / 1000);
+
+  // today valid steps (delta sum)
+  const [todayValidRows] = await pool.query(
+    `SELECT IFNULL(SUM(
+        CASE
+          WHEN suspicious_flag = 0
+          THEN delta_steps
+          ELSE 0
+        END
+     ),0) AS valid_steps_today
+     FROM step_records
+     WHERE user_id = ?
+     AND DATE(recorded_at) = CURDATE()`,
+    [userId]
+  );
+
+  const validStepsToday =
+    Number(todayValidRows[0].valid_steps_today);
 
 
-  // weekly steps
+  const todayPoints = Math.floor(validStepsToday / 1000);
+
+
+  // weekly steps (valid only)
   const [weeklyRows] = await pool.query(
-    `SELECT IFNULL(SUM(delta_steps), 0) AS weekly_steps
+    `SELECT IFNULL(SUM(
+        CASE
+          WHEN suspicious_flag = 0
+          THEN delta_steps
+          ELSE 0
+        END
+     ),0) AS weekly_steps
      FROM step_records
      WHERE user_id = ?
      AND recorded_at >= CURDATE() - INTERVAL 7 DAY`,
     [userId]
   );
 
-  const weeklySteps = Number(weeklyRows[0].weekly_steps);
+  const weeklySteps =
+    Number(weeklyRows[0].weekly_steps);
 
 
-  // suspicious activity
+  // suspicious activity today
   const [suspiciousRows] = await pool.query(
     `SELECT COUNT(*) AS suspicious_count
      FROM step_records
@@ -164,7 +193,8 @@ async function getUserDashboard(userId) {
     [userId]
   );
 
-  const hasSuspicious = suspiciousRows[0].suspicious_count > 0;
+  const hasSuspicious =
+    suspiciousRows[0].suspicious_count > 0;
 
 
   return {
@@ -172,14 +202,14 @@ async function getUserDashboard(userId) {
       id: user.id,
       name: user.name,
       email: user.email,
-      totalPoints: user.total_points,
+      totalPoints: user.total_points, // ← энэ чинь total lifetime points
       level: calculateLevel(user.total_points),
       dailyGoal: user.daily_goal,
       profile_photo: user.profile_photo
     },
-    todaySteps,
-    weeklySteps,
-    todayPoints,
+    todaySteps,     // counter value
+    weeklySteps,    // valid weekly steps
+    todayPoints,    // зөв өнөөдрийн point
     hasSuspicious
   };
 
