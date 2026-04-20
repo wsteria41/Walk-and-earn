@@ -130,7 +130,7 @@ async function getUserDashboard(userId) {
     `SELECT total_steps
      FROM step_records
      WHERE user_id = ?
-     AND DATE(recorded_at) = CURDATE()
+     AND recorded_at >= CURDATE()
      ORDER BY recorded_at DESC
      LIMIT 1`,
     [userId]
@@ -153,7 +153,7 @@ async function getUserDashboard(userId) {
      ),0) AS valid_steps_today
      FROM step_records
      WHERE user_id = ?
-     AND DATE(recorded_at) = CURDATE()`,
+     AND recorded_at >= CURDATE()`,
     [userId]
   );
 
@@ -188,7 +188,7 @@ async function getUserDashboard(userId) {
     `SELECT COUNT(*) AS suspicious_count
      FROM step_records
      WHERE user_id = ?
-     AND DATE(recorded_at) = CURDATE()
+     AND recorded_at >= CURDATE()
      AND suspicious_flag = 1`,
     [userId]
   );
