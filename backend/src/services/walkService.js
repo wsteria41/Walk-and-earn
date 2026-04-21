@@ -268,13 +268,13 @@ async function getHistory(userId, days = 7) {
     FROM step_records
 
     WHERE user_id = ?
-    AND DATE(recorded_at) >= CURDATE() - INTERVAL ? DAY
+    AND recorded_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
 
     GROUP BY DATE(recorded_at)
 
     ORDER BY date DESC
     `,
-    [userId, days - 1]
+    [userId, days]
   );
 
   return { history: rows };
