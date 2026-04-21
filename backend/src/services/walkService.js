@@ -59,10 +59,9 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
     }
 
     // Sudden jump detection
-    if (delta > 5000) {
+    if (delta > 15000) {
       suspicious = 1;
       reason = "Sudden step jump";
-      delta = 0;
     }
 
     // 5 minute spike detection
@@ -71,7 +70,7 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
       const minutesDiff =
         (new Date(timestamp) - previousTime) / (1000 * 60);
 
-      if (minutesDiff <= 5 && delta > 1500) {
+      if (minutesDiff <= 5 && delta > 4000) {
         suspicious = 1;
         reason = "Unrealistic spike in 5 minutes";
         delta = 0;
@@ -134,7 +133,7 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
         longitude
       );
 
-      if (distance > 2 && delta > 200) {
+      if (distance > 5 && delta < 300) {
         suspicious = 1;
         reason = "GPS spoof detected";
         delta = 0;
@@ -286,8 +285,6 @@ LEFT JOIN (
 
 ON d.user_id = r.user_id
 AND d.date = r.date
-
-HAVING points > 0
 
 ORDER BY d.date DESC
 
