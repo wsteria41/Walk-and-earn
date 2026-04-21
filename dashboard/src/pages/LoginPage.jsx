@@ -32,8 +32,7 @@ export default function LoginPage() {
         return;
       }
       localStorage.setItem("token", token);
-      navigate(decoded.role === "ADMIN" ? "/admin/dashboard" : "/merchant/dashboard");
-    } catch {
+      navigate("/");    } catch {
       setError("И-мэйл эсвэл нууц үг буруу байна");
     } finally {
       setLoading(false);

@@ -12,7 +12,14 @@ export default function App() {
     <ThemeProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<LandingPage />} />          {/* ← нүүр хуудас */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute role="ADMIN">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/merchant/register" element={<MerchantRegister />} />
           <Route
