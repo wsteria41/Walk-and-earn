@@ -258,27 +258,32 @@ async function getHistory(userId, days = 7) {
 
   const [rows] = await pool.query(
     `SELECT 
-        DATE(recorded_at) AS date,
+        DATE(CONVERT_TZ(recorded_at,'+00:00','+08:00')) AS date,
         MAX(total_steps) AS steps,
         FLOOR(SUM(
-          CASE WHEN suspicious_flag = 0
-          THEN delta_steps
-          ELSE 0
-        END
+          CASE 
+            WHEN suspicious_flag = 0
+            THEN delta_steps
+            ELSE 0
+          END
         ) / 1000) AS points
+
      FROM step_records
+
      WHERE user_id = ?
-     AND recorded_at >= CURDATE() - INTERVAL ? DAY
-     GROUP BY DATE(recorded_at)
+     AND recorded_at >= NOW() - INTERVAL ? DAY
+
+     GROUP BY DATE(CONVERT_TZ(recorded_at,'+00:00','+08:00'))
+
      ORDER BY date DESC`,
-    [userId, days - 1]
+    [userId, days]
   );
 
   return {
     history: rows
   };
 
-} 
+}
 
 async function getDailySummary(userId) {
 

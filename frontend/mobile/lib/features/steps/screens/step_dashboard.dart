@@ -207,7 +207,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── HEADER — history/rewards-тэй ижил gradient ──
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
@@ -224,10 +223,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Hi",
-                      style: TextStyle(color: Colors.white70, fontSize: 15),
-                    ),
                     Text(
                       name,
                       style: const TextStyle(
