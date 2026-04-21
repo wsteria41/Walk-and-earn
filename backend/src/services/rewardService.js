@@ -21,6 +21,20 @@ async function redeemReward(userId, rewardId) {
 
     const reward = rewardRows[0];
 
+     const [existing] = await connection.query(
+      `SELECT id
+      FROM redeem_transactions
+      WHERE user_id = ?
+      AND reward_id = ?
+      AND status IN ('PENDING','APPROVED')
+      FOR UPDATE`,
+      [userId, rewardId]
+    );
+
+    if (existing.length > 0) {
+      throw new Error("You already redeemed this reward");
+    }
+
     if (reward.remaining_stock <= 0) {
       throw new Error("Reward out of stock");
     }
@@ -205,17 +219,36 @@ async function approveRedemption(merchantUserId, transactionId) {
   }
 }
 
-async function getRewardList() {
-  const [rows] = await pool.query(`
+async function getRewardList(userId) {
+
+  const [rows] = await pool.query(
+    `
     SELECT r.id, r.name, r.description, r.required_points,
-           r.remaining_stock, r.discount_percent, r.reward_type, r.image_url,
+           r.remaining_stock, r.discount_percent,
+           r.reward_type, r.image_url,
            m.business_name
+
     FROM rewards r
     JOIN merchants m ON r.merchant_id = m.id
-    WHERE r.is_active = 1 AND r.remaining_stock > 0
+
+    WHERE r.is_active = 1
+    AND r.remaining_stock > 0
+
+    AND NOT EXISTS (
+      SELECT 1
+      FROM redeem_transactions rt
+      WHERE rt.user_id = ?
+      AND rt.reward_id = r.id
+      AND rt.status IN ('PENDING','APPROVED')
+    )
+
     ORDER BY r.required_points ASC
-  `);
+    `,
+    [userId]
+  );
+
   return { rewards: rows };
+
 }
 
 

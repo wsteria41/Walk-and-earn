@@ -114,9 +114,11 @@ async function getMyRedemptions(req, res) {
   }
 }
 
+
 async function getRewardList(req, res) {
   try {
-    const result = await rewardService.getRewardList();
+    const userId = req.user.id;
+    const result = await rewardService.getRewardList(userId);
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
