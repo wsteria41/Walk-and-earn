@@ -257,40 +257,28 @@ async function syncSteps(userId, totalSteps, latitude, longitude) {
 async function getHistory(userId, days = 7) {
 
   const [rows] = await pool.query(
-    `
-SELECT 
-  DATE(sr.recorded_at) AS date,
-
-  MAX(sr.total_steps) AS steps,
-
-  FLOOR(MAX(sr.total_steps) / 1000)
-  -
-  IFNULL((
-    SELECT SUM(rt.points_used)
-    FROM redeem_transactions rt
-    WHERE rt.user_id = sr.user_id
-    AND DATE(rt.redeemed_at) = DATE(sr.recorded_at)
-    AND rt.status = 'APPROVED'
-  ),0) AS points
-
-FROM step_records sr
-
-WHERE sr.user_id = 19
-
-GROUP BY DATE(sr.recorded_at)
-
-HAVING points > 0
-
-ORDER BY date DESC
-
-LIMIT 7;
-    `,
-    [userId, days]
+    `SELECT 
+        DATE(recorded_at) AS date,
+        MAX(total_steps) AS steps,
+        FLOOR(SUM(
+          CASE WHEN suspicious_flag = 0
+          THEN delta_steps
+          ELSE 0
+        END
+        ) / 1000) AS points
+     FROM step_records
+     WHERE user_id = ?
+     AND recorded_at >= CURDATE() - INTERVAL ? DAY
+     GROUP BY DATE(recorded_at)
+     ORDER BY date DESC`,
+    [userId, days - 1]
   );
 
-  return { history: rows };
+  return {
+    history: rows
+  };
 
-}
+} 
 
 async function getDailySummary(userId) {
 
