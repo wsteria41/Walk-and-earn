@@ -247,13 +247,23 @@ async function syncSteps(userId, totalSteps, latitude, longitude) {
 async function getHistory(userId, days = 7) {
 
   const [rows] = await pool.query(
-    `
+`
 SELECT 
-  d.date,
-  d.steps,
-  (FLOOR(d.steps / 1000) - IFNULL(r.used_points, 0)) AS points
+  dates.date,
+  IFNULL(steps.steps, 0) AS steps,
+  FLOOR(IFNULL(steps.steps, 0) / 1000)
+    - IFNULL(redeemed.used_points, 0) AS points
 
 FROM (
+  SELECT CURDATE() - INTERVAL seq DAY AS date
+  FROM (
+    SELECT 0 seq UNION SELECT 1 UNION SELECT 2
+    UNION SELECT 3 UNION SELECT 4 UNION SELECT 5
+    UNION SELECT 6
+  ) seqs
+) dates
+
+LEFT JOIN (
   SELECT 
     DATE(recorded_at) AS date,
     SUM(
@@ -262,32 +272,28 @@ FROM (
         THEN delta_steps
         ELSE 0
       END
-    ) AS steps,
-    user_id
+    ) AS steps
   FROM step_records
   WHERE user_id = ?
-  AND recorded_at >= CURDATE() - INTERVAL ? DAY
-  GROUP BY DATE(recorded_at), user_id
-) d
+  GROUP BY DATE(recorded_at)
+) steps
+ON dates.date = steps.date
 
 LEFT JOIN (
   SELECT 
-    user_id,
     DATE(redeemed_at) AS date,
     SUM(points_used) AS used_points
   FROM redeem_transactions
-  WHERE status = 'APPROVED'
-  GROUP BY user_id, DATE(redeemed_at)
-) r
+  WHERE user_id = ?
+  AND status = 'APPROVED'
+  GROUP BY DATE(redeemed_at)
+) redeemed
+ON dates.date = redeemed.date
 
-ON d.user_id = r.user_id
-AND d.date = r.date
-
-ORDER BY d.date DESC
-
+ORDER BY dates.date DESC
 LIMIT ?
-    `,
-    [userId, days, days]
+`,
+[userId, userId, days]
   );
 
   return { history: rows };
