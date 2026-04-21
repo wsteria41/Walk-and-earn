@@ -279,7 +279,7 @@ export default function Users({ T }) {
                   color: T.text,
                 }}
               >
-                {detail.name || "Хэрэглэгч"}
+                {detail.user?.name || "Хэрэглэгч"}
               </div>
 
               <button
@@ -308,28 +308,19 @@ export default function Users({ T }) {
                 }}
               >
                 <div>ID:</div>
-                <div>{detail.id}</div>
+                <div>{detail.user?.id}</div>
 
                 <div>Email:</div>
-                <div>{detail.email}</div>
-
-                <div>Утас:</div>
-                <div>{detail.phone || "—"}</div>
-
-                <div>Location:</div>
-                <div>{detail.location || "—"}</div>
+                <div>{detail.user?.email}</div>
 
                 <div>Нийт оноо:</div>
-                <div>{detail.total_points}</div>
+                <div>{detail.user?.total_points}</div>
 
-                <div>Level:</div>
-                <div>{detail.level}</div>
+                <div>Өдрийн зорилго:</div>
+                <div>{detail.user?.daily_goal}</div>
 
-                <div>BMI:</div>
-                <div>{detail.bmi || "—"}</div>
-
-                <div>Нас:</div>
-                <div>{detail.age || "—"}</div>
+                <div>Бүртгүүлсэн:</div>
+                <div>{detail.user?.created_at?.slice(0, 10)}</div>
               </div>
             </div>
           </div>
