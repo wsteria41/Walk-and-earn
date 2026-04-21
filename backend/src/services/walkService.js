@@ -256,71 +256,47 @@ async function syncSteps(userId, totalSteps, latitude, longitude) {
 
 async function getHistory(userId, days = 7) {
 
-  const [historyRows] = await pool.query(
+  const [rows] = await pool.query(
     `
-    SELECT 
-      DATE(sr.recorded_at) AS date,
+SELECT 
+  d.date,
+  d.steps,
+  (FLOOR(d.steps / 1000) - IFNULL(r.used_points, 0)) AS points
 
-      MAX(sr.total_steps) AS steps,
+FROM (
+  SELECT 
+    DATE(recorded_at) AS date,
+    MAX(total_steps) AS steps,
+    user_id
+  FROM step_records
+  WHERE user_id = ?
+  AND recorded_at >= CURDATE() - INTERVAL ? DAY
+  GROUP BY DATE(recorded_at), user_id
+) d
 
-      (
-        SELECT u2.total_points
-        FROM users u2
-        WHERE u2.id = sr.user_id
-      )
-      -
-      IFNULL(
-        (
-          SELECT u_prev.total_points
-          FROM users u_prev
-          JOIN step_records prev
-          ON prev.user_id = u_prev.id
-          WHERE prev.user_id = sr.user_id
-          AND DATE(prev.recorded_at) < DATE(sr.recorded_at)
-          ORDER BY prev.recorded_at DESC
-          LIMIT 1
-        ),
-        0
-      ) AS points
+LEFT JOIN (
+  SELECT 
+    user_id,
+    DATE(redeemed_at) AS date,
+    SUM(points_used) AS used_points
+  FROM redeem_transactions
+  WHERE status = 'APPROVED'
+  GROUP BY user_id, DATE(redeemed_at)
+) r
 
-    FROM step_records sr
+ON d.user_id = r.user_id
+AND d.date = r.date
 
-    WHERE sr.user_id = ?
-    AND sr.recorded_at >= CURDATE() - INTERVAL ? DAY
+HAVING points > 0
 
-    GROUP BY DATE(sr.recorded_at)
+ORDER BY d.date DESC
 
-    ORDER BY date DESC
+LIMIT ?
     `,
-    [userId, days - 1]
+    [userId, days, days]
   );
 
-
-  const [[stepsRow]] = await pool.query(
-    `
-    SELECT MAX(total_steps) AS total_steps
-    FROM step_records
-    WHERE user_id = ?
-    `,
-    [userId]
-  );
-
-
-  const [[pointsRow]] = await pool.query(
-    `
-    SELECT total_points
-    FROM users
-    WHERE id = ?
-    `,
-    [userId]
-  );
-
-
-  return {
-    totalSteps: stepsRow.total_steps || 0,
-    totalPoints: pointsRow.total_points || 0,
-    history: historyRows
-  };
+  return { history: rows };
 
 }
 
