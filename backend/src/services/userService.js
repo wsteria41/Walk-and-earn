@@ -123,9 +123,6 @@ async function getUserDashboard(userId) {
   if (!userRows.length) throw new Error("User not found");
 
   const user = userRows[0];
-
-
-  // today total_steps (counter)
   const [todayRows] = await pool.query(
     `SELECT total_steps
      FROM step_records
@@ -141,8 +138,6 @@ async function getUserDashboard(userId) {
       ? Number(todayRows[0].total_steps)
       : 0;
 
-
-  // today valid steps (delta sum)
 const [todayRowsForPoints] = await pool.query(
   `SELECT IFNULL(MAX(total_steps),0) AS today_steps
    FROM step_records

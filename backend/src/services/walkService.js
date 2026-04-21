@@ -266,7 +266,7 @@ async function getHistory(userId, days = 7) {
       FLOOR(
         SUM(
           CASE 
-            WHEN suspicious_flag = 0 
+            WHEN suspicious_flag = 0
             THEN delta_steps
             ELSE 0
           END
@@ -280,14 +280,12 @@ async function getHistory(userId, days = 7) {
 
     GROUP BY DATE(recorded_at)
 
-    HAVING steps > 0
-
     ORDER BY date DESC
     `,
     [userId, days - 1]
   );
 
-  const [[totalStepsRow]] = await pool.query(
+  const [[stepsRow]] = await pool.query(
     `
     SELECT MAX(total_steps) AS total_steps
     FROM step_records
@@ -296,49 +294,20 @@ async function getHistory(userId, days = 7) {
     [userId]
   );
 
-  const [[earnedPointsRow]] = await pool.query(
+  const [[pointsRow]] = await pool.query(
     `
-    SELECT FLOOR(
-      SUM(
-        CASE 
-          WHEN suspicious_flag = 0 
-          THEN delta_steps
-          ELSE 0
-        END
-      ) / 1000
-    ) AS earned_points
-    FROM step_records
-    WHERE user_id = ?
+    SELECT total_points
+    FROM users
+    WHERE id = ?
     `,
     [userId]
   );
-
-  const [[redeemedPointsRow]] = await pool.query(
-    `
-    SELECT IFNULL(SUM(points_used),0) AS redeemed_points
-    FROM redeem_transactions
-    WHERE user_id = ?
-    AND status = 'APPROVED'
-    `,
-    [userId]
-  );
-
-
-  // 5️⃣ Final available points
-  const totalPoints =
-    (earnedPointsRow.earned_points || 0)
-    -
-    (redeemedPointsRow.redeemed_points || 0);
 
 
   return {
-
-    totalSteps: totalStepsRow.total_steps || 0,
-
-    totalPoints,
-
+    totalSteps: stepsRow.total_steps || 0,
+    totalPoints: pointsRow.total_points || 0,
     history: historyRows
-
   };
 
 }
