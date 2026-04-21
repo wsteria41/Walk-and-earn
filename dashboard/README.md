@@ -17,4 +17,4 @@ If you are developing a production application, we recommend using TypeScript wi
 
 
 Updte hiih uydee 
-./deploy-dashboard.sh
+ ~/deploy-dashboard.sh

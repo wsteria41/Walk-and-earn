@@ -295,7 +295,7 @@ export default function Users({ T }) {
                   cursor: "pointer",
                 }}
               >
-                ✕
+                ❤️
               </button>
 
               <div
