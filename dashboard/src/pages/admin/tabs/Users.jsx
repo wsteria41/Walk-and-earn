@@ -55,7 +55,6 @@ export default function Users({ T }) {
           marginBottom: 24,
         }}
       >
-
         <input
           placeholder="Нэр, и-мэйлээр хайх..."
           value={search}
@@ -280,7 +279,7 @@ export default function Users({ T }) {
                   color: T.text,
                 }}
               >
-                {detail.user?.name || "Хэрэглэгч"}
+                {detail.name || "Хэрэглэгч"}
               </div>
 
               <button
@@ -298,6 +297,40 @@ export default function Users({ T }) {
               >
                 ✕
               </button>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 12,
+                  fontSize: 14,
+                  color: T.textSub,
+                }}
+              >
+                <div>ID:</div>
+                <div>{detail.id}</div>
+
+                <div>Email:</div>
+                <div>{detail.email}</div>
+
+                <div>Утас:</div>
+                <div>{detail.phone || "—"}</div>
+
+                <div>Location:</div>
+                <div>{detail.location || "—"}</div>
+
+                <div>Нийт оноо:</div>
+                <div>{detail.total_points}</div>
+
+                <div>Level:</div>
+                <div>{detail.level}</div>
+
+                <div>BMI:</div>
+                <div>{detail.bmi || "—"}</div>
+
+                <div>Нас:</div>
+                <div>{detail.age || "—"}</div>
+              </div>
             </div>
           </div>
         </div>

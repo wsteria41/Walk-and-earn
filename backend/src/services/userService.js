@@ -192,7 +192,7 @@ const todayPoints =
       id: user.id,
       name: user.name,
       email: user.email,
-      totalPoints: user.total_points, // ← энэ чинь total lifetime points
+      totalPoints: user.total_points,
       level: calculateLevel(user.total_points),
       dailyGoal: user.daily_goal,
       profile_photo: user.profile_photo
