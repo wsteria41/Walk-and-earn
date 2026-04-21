@@ -12,14 +12,7 @@ export default function App() {
     <ThemeProvider>
       <BrowserRouter>
         <Routes>
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute role="ADMIN">
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/" element={<LandingPage />} />         
           <Route path="/login" element={<LoginPage />} />
           <Route path="/merchant/register" element={<MerchantRegister />} />
           <Route
