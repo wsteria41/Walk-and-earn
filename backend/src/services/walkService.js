@@ -259,15 +259,25 @@ async function getHistory(userId, days = 7) {
   const [rows] = await pool.query(
     `
     SELECT 
-      DATE(recorded_at) AS date,
-      MAX(total_steps) AS steps,
-      FLOOR(MAX(total_steps) / 1000) AS points
+      DATE(sr.recorded_at) AS date,
 
-    FROM step_records
+      MAX(sr.total_steps) AS steps,
 
-    WHERE user_id = ?
+      FLOOR(MAX(sr.total_steps) / 1000)
+      -
+      IFNULL((
+        SELECT SUM(rt.points_used)
+        FROM redeem_transactions rt
+        WHERE rt.user_id = sr.user_id
+        AND DATE(rt.created_at) = DATE(sr.recorded_at)
+        AND rt.status = 'APPROVED'
+      ),0) AS points
 
-    GROUP BY DATE(recorded_at)
+    FROM step_records sr
+
+    WHERE sr.user_id = ?
+
+    GROUP BY DATE(sr.recorded_at)
 
     ORDER BY date DESC
 
