@@ -258,25 +258,21 @@ async function getHistory(userId, days = 7) {
 
   const [rows] = await pool.query(
     `SELECT 
-        DATE(CONVERT_TZ(recorded_at,'+00:00','+08:00')) AS date,
+        DATE(recorded_at) AS date,
+
         MAX(total_steps) AS steps,
-        FLOOR(SUM(
-          CASE 
-            WHEN suspicious_flag = 0
-            THEN delta_steps
-            ELSE 0
-          END
-        ) / 1000) AS points
+
+        FLOOR(MAX(total_steps) / 1000) AS points
 
      FROM step_records
 
      WHERE user_id = ?
-     AND recorded_at >= NOW() - INTERVAL ? DAY
+     AND recorded_at >= CURDATE() - INTERVAL ? DAY
 
-     GROUP BY DATE(CONVERT_TZ(recorded_at,'+00:00','+08:00'))
+     GROUP BY DATE(recorded_at)
 
      ORDER BY date DESC`,
-    [userId, days]
+    [userId, days - 1]
   );
 
   return {
