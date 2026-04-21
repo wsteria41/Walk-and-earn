@@ -259,7 +259,7 @@ async function getHistory(userId, days = 7) {
   const [rows] = await pool.query(
     `SELECT 
         DATE(recorded_at) AS date,
-        SUM(delta_steps) AS steps,
+        MAX(total_steps) AS steps,
         FLOOR(SUM(
           CASE WHEN suspicious_flag = 0
           THEN delta_steps
