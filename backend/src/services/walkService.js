@@ -256,7 +256,13 @@ SELECT
 FROM (
   SELECT 
     DATE(recorded_at) AS date,
-    MAX(total_steps) AS steps,
+    SUM(
+  CASE
+    WHEN suspicious_flag = 0
+    THEN delta_steps
+    ELSE 0
+  END
+) AS steps,
     user_id
   FROM step_records
   WHERE user_id = ?
