@@ -257,27 +257,27 @@ async function syncSteps(userId, totalSteps, latitude, longitude) {
 async function getHistory(userId, days = 7) {
 
   const [rows] = await pool.query(
-    `SELECT 
-        DATE(recorded_at) AS date,
+    `
+    SELECT 
+      DATE(recorded_at) AS date,
 
-        MAX(total_steps) AS steps,
+      MAX(total_steps) AS steps,
 
-        FLOOR(MAX(total_steps) / 1000) AS points
+      FLOOR(MAX(total_steps) / 1000) AS points
 
-     FROM step_records
+    FROM step_records
 
-     WHERE user_id = ?
-     AND recorded_at >= CURDATE() - INTERVAL ? DAY
+    WHERE user_id = ?
+    AND DATE(recorded_at) >= CURDATE() - INTERVAL ? DAY
 
-     GROUP BY DATE(recorded_at)
+    GROUP BY DATE(recorded_at)
 
-     ORDER BY date DESC`,
+    ORDER BY date DESC
+    `,
     [userId, days - 1]
   );
 
-  return {
-    history: rows
-  };
+  return { history: rows };
 
 }
 
