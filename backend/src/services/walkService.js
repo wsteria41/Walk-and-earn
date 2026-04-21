@@ -73,7 +73,6 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
       if (minutesDiff <= 5 && delta > 4000) {
         suspicious = 1;
         reason = "Unrealistic spike in 5 minutes";
-        delta = 0;
       }
 
     }
@@ -93,7 +92,6 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
     if (dailyTotal > 40000) {
       suspicious = 1;
       reason = "Daily step limit exceeded";
-      delta = 0;
     }
 
     // SPEED DETECTION
@@ -108,19 +106,14 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
 
       const hours =
         (new Date(timestamp) - previousTime) / (1000 * 60 * 60);
-
       if (hours > 0) {
-
         const speed = distanceKm / hours;
 
         if (speed > 15) {
           suspicious = 1;
           reason = "Unrealistic walking speed";
-          delta = 0;
         }
-
       }
-
     }
 
     //GPS SPOOF DETECTION 
@@ -136,7 +129,7 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
       if (distance > 5 && delta < 300) {
         suspicious = 1;
         reason = "GPS spoof detected";
-        delta = 0;
+    
       }
 
     }
@@ -166,7 +159,6 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
       if (variance < 5 && max > 20) {
         suspicious = 1;
         reason = "Suspicious step pattern";
-        delta = 0;
       }
 
     }
@@ -183,7 +175,6 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
     let pointsEarned = 0;
 
     if (!suspicious && delta > 0) {
-
       const [userRows] = await connection.query(
         `SELECT pending_steps
          FROM users
@@ -265,7 +256,13 @@ SELECT
 FROM (
   SELECT 
     DATE(recorded_at) AS date,
-    MAX(total_steps) AS steps,
+    SUM(
+      CASE
+        WHEN suspicious_flag = 0
+        THEN delta_steps
+        ELSE 0
+      END
+    ) AS steps,
     user_id
   FROM step_records
   WHERE user_id = ?
