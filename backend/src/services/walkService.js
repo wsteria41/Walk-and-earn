@@ -82,7 +82,7 @@ async function submitSteps(userId, totalSteps, latitude, longitude, timestamp = 
       `SELECT SUM(delta_steps) as daily_total
        FROM step_records
        WHERE user_id = ?
-       AND recorded_at >= CURDATE()
+       AND recorded_at = CURDATE()
        AND suspicious_flag = 0`,
       [userId]
     );
