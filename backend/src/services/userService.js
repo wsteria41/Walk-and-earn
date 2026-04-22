@@ -124,20 +124,21 @@ async function getUserDashboard(userId) {
 
   const user = userRows[0];
 const [todayRows] = await pool.query(
-  `SELECT IFNULL(SUM(
-     CASE
-       WHEN suspicious_flag = 0
-       THEN delta_steps
-       ELSE 0
-     END
-   ),0) AS today_steps,
-   EXISTS(
-     SELECT 1
-     FROM step_records
-     WHERE user_id = ?
-     AND DATE(recorded_at) = CURDATE()
-     AND suspicious_flag = 1
-   ) AS hasSuspicious
+  `SELECT 
+     IFNULL(SUM(
+       CASE
+         WHEN suspicious_flag = 0
+         THEN delta_steps
+         ELSE 0
+       END
+     ),0) AS today_steps,
+     EXISTS(
+       SELECT 1
+       FROM step_records
+       WHERE user_id = ?
+       AND DATE(recorded_at) = CURDATE()
+       AND suspicious_flag = 1
+     ) AS hasSuspicious
    FROM step_records
    WHERE user_id = ?
    AND DATE(recorded_at) = CURDATE()`,
@@ -145,7 +146,9 @@ const [todayRows] = await pool.query(
 );
 
 const todaySteps = Number(todayRows[0].today_steps);
+
 const todayPoints = Math.floor(todaySteps / 1000);
+
 const hasSuspicious = Boolean(todayRows[0].hasSuspicious);
 
   // weekly steps (valid only)
@@ -167,18 +170,7 @@ const hasSuspicious = Boolean(todayRows[0].hasSuspicious);
     Number(weeklyRows[0].weekly_steps);
 
 
-  // suspicious activity today
-  const [suspiciousRows] = await pool.query(
-    `SELECT COUNT(*) AS suspicious_count
-     FROM step_records
-     WHERE user_id = ?
-     AND recorded_at >= CURDATE()
-     AND suspicious_flag = 1`,
-    [userId]
-  );
 
-  const hasSuspicious =
-    suspiciousRows[0].suspicious_count > 0;
 
 
   return {
