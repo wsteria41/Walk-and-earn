@@ -250,19 +250,13 @@ async function getHistory(userId, days = 7) {
     `
 SELECT 
   d.date,
-  d.valid_steps AS steps,
-  FLOOR(d.valid_steps / 1000) - IFNULL(r.used_points, 0) AS points
+  d.steps,
+  (FLOOR(d.steps / 1000) - IFNULL(r.used_points, 0)) AS points
 
 FROM (
   SELECT 
     DATE(recorded_at) AS date,
-    SUM(
-      CASE 
-        WHEN suspicious_flag = 0 
-        THEN delta_steps 
-        ELSE 0 
-      END
-    ) AS valid_steps,
+    MAX(total_steps) AS steps,
     user_id
   FROM step_records
   WHERE user_id = ?
@@ -276,14 +270,15 @@ LEFT JOIN (
     DATE(redeemed_at) AS date,
     SUM(points_used) AS used_points
   FROM redeem_transactions
-  WHERE status='APPROVED'
+  WHERE status = 'APPROVED'
   GROUP BY user_id, DATE(redeemed_at)
 ) r
 
-ON d.user_id=r.user_id
-AND d.date=r.date
+ON d.user_id = r.user_id
+AND d.date = r.date
 
 ORDER BY d.date DESC
+
 LIMIT ?
     `,
     [userId, days, days]
@@ -293,21 +288,46 @@ LIMIT ?
 
 }
 
-
 async function getDailySummary(userId) {
-  const [rows] = await pool.query(
-    `SELECT
-       IFNULL(SUM(delta_steps), 0) AS total_steps_today,
-       IFNULL(SUM(CASE WHEN suspicious_flag=0 THEN delta_steps ELSE 0 END), 0) AS valid_steps_today
+
+  const [stepRows] = await pool.query(
+    `SELECT total_steps
      FROM step_records
-     WHERE user_id=? AND DATE(recorded_at)=CURDATE()`,
+     WHERE user_id = ?
+     AND DATE(recorded_at) = CURDATE()
+     ORDER BY recorded_at DESC
+     LIMIT 1`,
     [userId]
   );
-  const totalSteps  = Number(rows[0].total_steps_today);
-  const validSteps  = Number(rows[0].valid_steps_today);
+
+  const totalSteps =
+    stepRows.length > 0
+      ? Number(stepRows[0].total_steps)
+      : 0;
+
+
+  const [validRows] = await pool.query(
+    `SELECT IFNULL(SUM(
+        CASE WHEN suspicious_flag = 0
+        THEN delta_steps
+        ELSE 0 END
+     ),0) AS valid_steps_today
+     FROM step_records
+     WHERE user_id = ?
+     AND DATE(recorded_at) = CURDATE()`,
+    [userId]
+  );
+
+  const validSteps = Number(validRows[0].valid_steps_today);
+
   const pointsToday = Math.floor(validSteps / 1000);
 
-  return { totalStepsToday: totalSteps, validStepsToday: validSteps, pointsToday };
+  return {
+    totalStepsToday: totalSteps,
+    validStepsToday: validSteps,
+    pointsToday
+  };
+
 }
 
 module.exports = {
