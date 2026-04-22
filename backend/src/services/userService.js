@@ -1,6 +1,5 @@
 const pool = require("../config/db");
 
-//Level tootsoolol
 function calculateLevel(totalPoints) {
   if (totalPoints >= 5000) return 5;
   if (totalPoints >= 2000) return 4;
@@ -123,64 +122,51 @@ async function getUserDashboard(userId) {
   if (!userRows.length) throw new Error("User not found");
 
   const user = userRows[0];
+
+  // ✅ todaySteps — хамгийн сүүлийн total_steps (Health Connect утга)
   const [todayRows] = await pool.query(
     `SELECT total_steps
      FROM step_records
      WHERE user_id = ?
-     AND recorded_at >= CURDATE()
+     AND DATE(recorded_at) = CURDATE()
      ORDER BY recorded_at DESC
      LIMIT 1`,
     [userId]
   );
+  const todaySteps = todayRows.length > 0 ? Number(todayRows[0].total_steps) : 0;
 
-  const todaySteps =
-    todayRows.length > 0
-      ? Number(todayRows[0].total_steps)
-      : 0;
-
-const [todayRowsForPoints] = await pool.query(
-  `SELECT IFNULL(MAX(total_steps),0) AS today_steps
-   FROM step_records
-   WHERE user_id = ?
-   AND DATE(recorded_at) = CURDATE()`,
-  [userId]
-);
-
-const todayPoints =
-  Math.floor(todayRowsForPoints[0].today_steps / 1000);
+  // ✅ todayPoints — valid delta нийлбэрээр
+  const [ptRows] = await pool.query(
+    `SELECT IFNULL(SUM(CASE WHEN suspicious_flag=0 THEN delta_steps ELSE 0 END),0) AS valid_steps
+     FROM step_records
+     WHERE user_id = ?
+     AND DATE(recorded_at) = CURDATE()`,
+    [userId]
+  );
+  const todayPoints = Math.floor(Number(ptRows[0].valid_steps) / 1000);
 
   // weekly steps (valid only)
   const [weeklyRows] = await pool.query(
     `SELECT IFNULL(SUM(
-        CASE
-          WHEN suspicious_flag = 0
-          THEN delta_steps
-          ELSE 0
-        END
+        CASE WHEN suspicious_flag = 0 THEN delta_steps ELSE 0 END
      ),0) AS weekly_steps
      FROM step_records
      WHERE user_id = ?
      AND recorded_at >= CURDATE() - INTERVAL 7 DAY`,
     [userId]
   );
-
-  const weeklySteps =
-    Number(weeklyRows[0].weekly_steps);
-
+  const weeklySteps = Number(weeklyRows[0].weekly_steps);
 
   // suspicious activity today
   const [suspiciousRows] = await pool.query(
     `SELECT COUNT(*) AS suspicious_count
      FROM step_records
      WHERE user_id = ?
-     AND recorded_at >= CURDATE()
+     AND DATE(recorded_at) = CURDATE()
      AND suspicious_flag = 1`,
     [userId]
   );
-
-  const hasSuspicious =
-    suspiciousRows[0].suspicious_count > 0;
-
+  const hasSuspicious = suspiciousRows[0].suspicious_count > 0;
 
   return {
     user: {
@@ -192,12 +178,11 @@ const todayPoints =
       dailyGoal: user.daily_goal,
       profile_photo: user.profile_photo
     },
-    todaySteps,     // counter value
-    weeklySteps,    // valid weekly steps
-    todayPoints,    // зөв өнөөдрийн point
+    todaySteps,
+    weeklySteps,
+    todayPoints,
     hasSuspicious
   };
-
 }
 
 async function updateGoal(userId, goal) {
@@ -215,12 +200,8 @@ async function getUserProfile(userId) {
      FROM users WHERE id = ?`,
     [userId]
   );
-
   if (!rows.length) return null;
-
   const user = rows[0];
-
-  //Level DB ees bish tootsoolj butsaana 
   return {
     ...user,
     level: calculateLevel(user.total_points)
@@ -242,31 +223,23 @@ async function updateHealth(userId, age, height, weight, birth_year) {
   );
 }
 
-
 async function getTotalStats(userId) {
-
   const [[steps]] = await pool.query(
     `SELECT IFNULL(SUM(delta_steps), 0) AS totalSteps
-     FROM step_records
-     WHERE user_id = ?`,
+     FROM step_records WHERE user_id = ?`,
     [userId]
   );
-
   const [[rewards]] = await pool.query(
     `SELECT COUNT(*) AS rewards
      FROM redeem_transactions
-     WHERE user_id = ?
-     AND status = 'APPROVED'`,
+     WHERE user_id = ? AND status = 'APPROVED'`,
     [userId]
   );
-
   const [[activeDays]] = await pool.query(
     `SELECT COUNT(DISTINCT DATE(recorded_at)) AS activeDays
-     FROM step_records
-     WHERE user_id = ?`,
+     FROM step_records WHERE user_id = ?`,
     [userId]
   );
-
   return {
     totalSteps: steps.totalSteps || 0,
     rewards: rewards.rewards || 0,
