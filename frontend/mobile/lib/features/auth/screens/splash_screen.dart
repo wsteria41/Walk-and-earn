@@ -52,8 +52,8 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-Future<void> checkLogin() async {
-    await Future.delayed(const Duration(milliseconds: 1500)); 
+  Future<void> checkLogin() async {
+    await Future.delayed(const Duration(milliseconds: 1500));
     String? token = await storage.read(key: "token");
     if (!mounted) return;
 
@@ -62,58 +62,57 @@ Future<void> checkLogin() async {
     } else {
       Navigator.pushReplacementNamed(context, "/auth");
     }
-}
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       backgroundColor: Colors.black,
+
       body: SafeArea(
         child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Padding(
-          padding: const EdgeInsets.only(top: 120),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [
-                    Colors.white,
-                    Color(0xFFD4B4FF),
-                    Color.fromARGB(255, 139, 76, 202),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ).createShader(bounds),
-                child: const Text(
-                  "WEARN",
-                  style: TextStyle(
-                    fontSize: 56,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 8,
-                    color: Colors.white,
+          opacity: _fadeAnimation,
+          child: Center(
+            // 👈 НЭМ
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // 👈 НЭМ
+              children: [
+                ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [
+                      Colors.white,
+                      Color(0xFFD4B4FF),
+                      Color.fromARGB(255, 139, 76, 202),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds),
+                  child: const Text(
+                    "WEARN",
+                    style: TextStyle(
+                      fontSize: 56,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 8,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-           
-              const Text(
-                "WALK. EARN. REPEAT.",
-                style: TextStyle(
-                  color: Color(0xFFAAAAAA),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 3,
+                const Text(
+                  "WALK. EARN. REPEAT.",
+                  style: TextStyle(
+                    color: Color(0xFFAAAAAA),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 3,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }

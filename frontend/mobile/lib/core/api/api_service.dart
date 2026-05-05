@@ -182,7 +182,7 @@ class ApiService {
     double latitude,
     double longitude,
   ) async {
-    final response = await post("/users/sync-steps", {
+    final response = await post(ApiConstants.syncSteps, {
       "totalSteps": totalSteps,
       "latitude": latitude,
       "longitude": longitude,
