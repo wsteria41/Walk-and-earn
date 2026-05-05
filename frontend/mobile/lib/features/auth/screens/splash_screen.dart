@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../../core/storage/secure_storage.dart'; 
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,7 +12,9 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  final storage = const FlutterSecureStorage();
+
+  final storage = SecureStorage();
+
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -54,10 +56,14 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> checkLogin() async {
     await Future.delayed(const Duration(milliseconds: 1500));
-    String? token = await storage.read(key: "token");
+
+    String? token = await storage.getToken(); 
+
+    print("SPLASH TOKEN: $token"); 
+
     if (!mounted) return;
 
-    if (token != null) {
+    if (token != null && token.isNotEmpty) { 
       Navigator.pushReplacementNamed(context, "/dashboard");
     } else {
       Navigator.pushReplacementNamed(context, "/auth");
@@ -73,9 +79,8 @@ class _SplashScreenState extends State<SplashScreen>
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Center(
-            // 👈 НЭМ
             child: Column(
-              mainAxisSize: MainAxisSize.min, // 👈 НЭМ
+              mainAxisSize: MainAxisSize.min,
               children: [
                 ShaderMask(
                   shaderCallback: (bounds) => const LinearGradient(
