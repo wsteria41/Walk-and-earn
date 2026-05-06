@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/storage/secure_storage.dart'; 
+import 'package:http/http.dart' as http;
+
+import '../../../core/storage/secure_storage.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -57,15 +59,38 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> checkLogin() async {
     await Future.delayed(const Duration(milliseconds: 1500));
 
-    String? token = await storage.getToken(); 
-
-    print("SPLASH TOKEN: $token"); 
+    String? token = await storage.getToken();
+    print("SPLASH TOKEN: $token");
 
     if (!mounted) return;
 
-    if (token != null && token.isNotEmpty) { 
-      Navigator.pushReplacementNamed(context, "/dashboard");
-    } else {
+    
+    if (token == null || token.isEmpty) {
+      Navigator.pushReplacementNamed(context, "/auth");
+      return;
+    }
+
+    try {
+      final res = await http.get(
+        Uri.parse("https://wearn.me/users/profile"),
+        headers: {
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      print("TOKEN CHECK STATUS: ${res.statusCode}");
+
+      if (res.statusCode == 200) {
+       
+        Navigator.pushReplacementNamed(context, "/dashboard");
+      } else {
+        
+        await storage.deleteToken();
+        Navigator.pushReplacementNamed(context, "/auth");
+      }
+    } catch (e) {
+     
+      await storage.deleteToken();
       Navigator.pushReplacementNamed(context, "/auth");
     }
   }
@@ -74,38 +99,24 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [
-                ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [
-                      Colors.white,
-                      Color(0xFFD4B4FF),
-                      Color.fromARGB(255, 139, 76, 202),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ).createShader(bounds),
-                  child: const Text(
-                    "WEARN",
-                    style: TextStyle(
-                      fontSize: 56,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 8,
-                      color: Colors.white,
-                    ),
+              children: const [
+                Text(
+                  "WEARN",
+                  style: TextStyle(
+                    fontSize: 56,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 8,
+                    color: Colors.white,
                   ),
                 ),
-
-                const SizedBox(height: 10),
-
-                const Text(
+                SizedBox(height: 10),
+                Text(
                   "WALK. EARN. REPEAT.",
                   style: TextStyle(
                     color: Color(0xFFAAAAAA),
