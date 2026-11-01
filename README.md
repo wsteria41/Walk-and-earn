@@ -23,10 +23,6 @@ The repository contains three parts:
 - **Admin and merchant dashboard:** web interface with light and dark mode [manage users, rewards, merchants, statistics]
 - **Safe point transactions:** balance updates use database transactions (`BEGIN` / `COMMIT` / `ROLLBACK`) and `SELECT ... FOR UPDATE` to avoid inconsistent balances
 
-## Screenshots
-| Home | Activity | Rewards | Dashboard |
-|------|----------|---------|-----------|
-| ![Home](docs/screenshots/home.png) | ![Activity](docs/screenshots/activity.png) | ![Rewards](docs/screenshots/rewards.png) | ![Dashboard](docs/screenshots/dashboard.png) |
 
 ## Architecture
 ```
